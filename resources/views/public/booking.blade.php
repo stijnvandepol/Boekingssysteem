@@ -6,12 +6,15 @@
 
     <div class="grid grid-2">
         <div class="card">
-            <h2>Beschikbare dagen</h2>
+            <h2>📅 Beschikbare dagen</h2>
 
             @if ($slotsByDate->isEmpty())
-                <div class="muted">Geen beschikbaarheid in de komende 30 dagen.</div>
+                <div class="muted" style="padding: 20px; text-align: center;">
+                    <div style="font-size: 1.1rem; margin-bottom: 8px;">Geen beschikbaarheid</div>
+                    <div style="font-size: 0.9rem;">Helaas is er geen beschikbaarheid in de komende 30 dagen.</div>
+                </div>
             @else
-                <div class="slots" style="margin-top:12px;">
+                <div class="slots" style="margin-top: 8px;">
                     @foreach ($slotsByDate as $date => $slots)
                         @php
                             $day = Carbon::parse($date, $timezone);
@@ -19,10 +22,10 @@
                                 ? 'Vandaag'
                                 : ($day->isSameDay($today->copy()->addDay()) ? 'Morgen' : $day->locale('nl')->isoFormat('dd D MMM'));
                         @endphp
-                        <div class="slot" style="flex-direction:column; align-items:stretch;">
-                            <strong>{{ $label }}</strong>
-                            <div class="muted">{{ $day->locale('nl')->isoFormat('dddd D MMMM') }}</div>
-                            <div class="slots" style="margin-top:8px;">
+                        <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-light);">
+                            <strong style="color: var(--ink); font-weight: 600;">{{ $label }}</strong>
+                            <div class="muted" style="font-size: 0.85rem; margin-top: 2px;">{{ $day->locale('nl')->isoFormat('dddd D MMMM') }}</div>
+                            <div class="slots" style="margin-top: 12px;">
                                 @foreach ($slots as $slot)
                                     @php
                                         $localStart = $slot->starts_at->setTimezone($timezone);
@@ -30,10 +33,14 @@
                                     @endphp
                                     <a class="slot" href="{{ route('booking.index', ['slot' => $slot->id]) }}#booking">
                                         <div>
-                                            {{ $localStart->format('H:i') }} - {{ $localEnd->format('H:i') }}
-                                            <div class="muted">{{ $slot->resource->name }}</div>
+                                            <strong style="color: var(--ink);">{{ $localStart->format('H:i') }} - {{ $localEnd->format('H:i') }}</strong>
+                                            <div class="muted" style="margin-top: 4px;">{{ $slot->resource->name }}</div>
                                         </div>
-                                        <div>{{ $slot->remainingCapacity() }} vrij</div>
+                                        <div style="white-space: nowrap; margin-left: 12px;">
+                                            <span style="background: rgba(5, 150, 105, 0.1); color: var(--accent); padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                                                {{ $slot->remainingCapacity() }} vrij
+                                            </span>
+                                        </div>
                                     </a>
                                 @endforeach
                             </div>
@@ -44,20 +51,25 @@
         </div>
 
         <div class="card" id="booking">
-            <h2>Afspraak boeken</h2>
+            <h2>✏️ Afspraak boeken</h2>
 
             @if (! $selectedSlot)
-                <div class="muted">Klik op een tijdslot om te boeken.</div>
+                <div class="muted" style="padding: 20px; text-align: center;">
+                    <div style="font-size: 1.1rem; margin-bottom: 8px;">Selecteer een tijdslot</div>
+                    <div style="font-size: 0.9rem;">Klik op een beschikbaar tijdslot aan de linkerkant.</div>
+                </div>
             @else
                 @php
                     $localStart = $selectedSlot->starts_at->setTimezone($timezone);
                     $localEnd = $selectedSlot->ends_at->setTimezone($timezone);
                     $maxDuration = $localStart->diffInMinutes($localEnd);
                 @endphp
-                <div class="muted" style="margin-bottom:12px;">
-                    {{ $selectedSlot->resource->name }} -
-                    {{ $localStart->locale('nl')->isoFormat('dd D MMM') }},
-                    {{ $localStart->format('H:i') }} - {{ $localEnd->format('H:i') }}
+                <div style="background: rgba(5, 150, 105, 0.05); border: 1px solid rgba(5, 150, 105, 0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 20px; font-size: 0.95rem;">
+                    <strong style="color: var(--accent); display: block; margin-bottom: 4px;">{{ $selectedSlot->resource->name }}</strong>
+                    <div class="muted">
+                        {{ $localStart->locale('nl')->isoFormat('dd D MMM') }},
+                        {{ $localStart->format('H:i') }} - {{ $localEnd->format('H:i') }}
+                    </div>
                 </div>
 
                 <form method="post" action="{{ route('booking.store') }}">
@@ -65,7 +77,7 @@
                     <input type="hidden" name="idempotency_key" value="{{ $idempotencyKey }}">
                     <input type="hidden" name="slot_instance_id" value="{{ $selectedSlot->id }}">
 
-                    <label for="duration_minutes">Duur</label>
+                    <label for="duration_minutes">Duur (minuten)</label>
                     <select name="duration_minutes" id="duration_minutes" required>
                         @foreach ($durations as $duration)
                             @if ($duration <= $maxDuration)
@@ -76,22 +88,22 @@
                         @endforeach
                     </select>
 
-                    <label for="name">Naam</label>
-                    <input type="text" name="name" id="name" required value="{{ old('name') }}">
+                    <label for="name">Naam *</label>
+                    <input type="text" name="name" id="name" required value="{{ old('name') }}" placeholder="Voornaam Achternaam">
 
-                    <label for="phone">Telefoonnummer</label>
-                    <input type="text" name="phone" id="phone" required value="{{ old('phone') }}">
+                    <label for="phone">Telefoonnummer *</label>
+                    <input type="text" name="phone" id="phone" required value="{{ old('phone') }}" placeholder="+31 (0)6 ...">
 
-                    <label for="email">E-mail (optioneel)</label>
-                    <input type="email" name="email" id="email" value="{{ old('email') }}">
+                    <label for="email">E-mailadres</label>
+                    <input type="email" name="email" id="email" value="{{ old('email') }}" placeholder="jouw@email.nl">
 
                     @if (config('services.turnstile.enabled'))
-                        <label for="turnstile_token">Turnstile token</label>
-                        <input type="text" name="turnstile_token" id="turnstile_token" placeholder="Vul token in">
-                        <div class="muted">Integreer Cloudflare Turnstile in de frontend voor productie.</div>
+                        <label for="turnstile_token">Beveiligingsverificatie</label>
+                        <input type="text" name="turnstile_token" id="turnstile_token" placeholder="Vul verificatie in">
+                        <div class="muted" style="margin-top: -12px; margin-bottom: 16px; font-size: 0.85rem;">Cloudflare Turnstile geïntegreerd voor productie.</div>
                     @endif
 
-                    <button type="submit">Boek afspraak</button>
+                    <button type="submit" style="margin-bottom: 0;">✓ Bevestig afspraak</button>
                 </form>
             @endif
         </div>

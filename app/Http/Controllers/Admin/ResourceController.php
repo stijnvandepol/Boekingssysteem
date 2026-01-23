@@ -13,7 +13,11 @@ class ResourceController extends Controller
         $resource = Resource::where('user_id', $request->user()->id)->firstOrFail();
         $this->authorize('update', $resource);
 
-        $resource->update($request->validated());
+        $data = $request->validated();
+        $data['min_notice_minutes'] = (int) round(((float) $data['min_notice_hours']) * 60);
+        unset($data['min_notice_hours']);
+
+        $resource->update($data);
 
         return redirect()->route('admin.dashboard')->with('status', 'Resource instellingen bijgewerkt.');
     }
