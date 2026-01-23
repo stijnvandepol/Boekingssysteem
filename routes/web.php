@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AvailabilityController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ResourceController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\PublicBookingController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin', 'throttle:admin'])->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('settings', [SettingsController::class, 'index'])->name('settings');
         Route::post('availability', [AvailabilityController::class, 'store'])->name('availability.store');
         Route::get('availability/{block}/edit', [AvailabilityController::class, 'edit'])->name('availability.edit');
         Route::put('availability/{block}', [AvailabilityController::class, 'update'])->name('availability.update');

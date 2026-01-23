@@ -19,7 +19,21 @@ class AvailabilityController extends Controller
         $this->authorize('update', $resource);
 
         try {
-            $service->createBlock($resource, $request->validated(), $request->user());
+            $data = $request->validated();
+            $rangesInput = $request->input('ranges');
+            if ($rangesInput) {
+                $ranges = json_decode($rangesInput, true);
+                if (! is_array($ranges) || count($ranges) === 0) {
+                    return back()->withErrors(['ranges' => 'Selecteer geldige blokken.'])->withInput();
+                }
+
+                $service->createBlocks($resource, $ranges, [
+                    'slot_length_minutes' => $data['slot_length_minutes'],
+                    'capacity' => $data['capacity'],
+                ], $request->user());
+            } else {
+                $service->createBlock($resource, $data, $request->user());
+            }
         } catch (ValidationException $exception) {
             return back()->withErrors($exception->errors())->withInput();
         }

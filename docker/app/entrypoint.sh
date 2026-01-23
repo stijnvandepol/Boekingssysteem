@@ -17,11 +17,29 @@ if [ -z "${APP_KEY:-}" ]; then
   fi
 fi
 
+wait_for_db() {
+  echo "Waiting for database connection..."
+  tries=30
+  while [ $tries -gt 0 ]; do
+    if php -r "try { new PDO('mysql:host='.(getenv('DB_HOST') ?: 'db').';port='.(getenv('DB_PORT') ?: '3306').';dbname='.(getenv('DB_DATABASE') ?: 'rens'), getenv('DB_USERNAME') ?: 'rens_app', getenv('DB_PASSWORD') ?: '', [PDO::ATTR_TIMEOUT => 2]); exit(0); } catch (Throwable \$e) { exit(1); }"; then
+      echo "Database connection ok."
+      return 0
+    fi
+    tries=$((tries-1))
+    sleep 2
+  done
+
+  echo "Database connection failed after retries."
+  return 1
+}
+
 if [ "${AUTO_MIGRATE:-false}" = "true" ]; then
+  wait_for_db
   su-exec app php artisan migrate --force
 fi
 
 if [ "${AUTO_SEED:-false}" = "true" ]; then
+  wait_for_db
   su-exec app php artisan db:seed --force
 fi
 

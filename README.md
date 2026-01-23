@@ -1,4 +1,4 @@
-# Boekingssysteem
+﻿# Boekingssysteem
 
 Productieklare Laravel booking app die volledig in Docker draait.
 
@@ -15,9 +15,14 @@ Productieklare Laravel booking app die volledig in Docker draait.
 
 App draait op `http://localhost:8080`.
 
+## Waar moeten gebruikers naartoe?
+
+- Bezoekers: `http://localhost:8080/` (publieke agenda + boeken)
+- Beheerders: `http://localhost:8080/login` (inloggen, daarna dashboard)
+
 ## Admin login
 
-- E‑mail: `admin@example.com`
+- E-mail: `admin@example.com`
 - Wachtwoord: `ChangeMe123!`
 
 ## Productie

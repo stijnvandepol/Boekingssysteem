@@ -24,6 +24,7 @@ class StoreAvailabilityBlockRequest extends FormRequest
                 Rule::in(config('booking.allowed_slot_lengths')),
             ],
             'capacity' => ['required', 'integer', 'min:1', 'max:50'],
+            'ranges' => ['nullable', 'string'],
         ];
     }
 }

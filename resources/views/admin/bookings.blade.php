@@ -19,54 +19,61 @@
                 </select>
             </div>
             <div>
-                <button type="submit">Filter</button>
+                <button type="submit" style="margin-top:26px;">Filter</button>
             </div>
         </form>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Boekingsdatum</th>
-                    <th>Slot</th>
-                    <th>Duur</th>
-                    <th>Gast</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($bookings as $booking)
+        <div style="overflow-x:auto; margin:-16px -16px 0 -16px;">
+            <table style="margin:0;">
+                <thead>
                     <tr>
-                        <td>{{ $booking->booked_at->format('d-m-Y H:i') }}</td>
-                        <td>{{ $booking->slotInstance?->starts_at?->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
-                        <td>{{ $booking->duration_minutes ?? $booking->slotInstance?->starts_at?->diffInMinutes($booking->slotInstance?->ends_at) }} min</td>
-                        <td>
-                            {{ $booking->guests->first()?->name }}
-                            <div class="muted">
-                                {{ $booking->guests->first()?->phone }}
-                                @if ($booking->guests->first()?->email)
-                                    — {{ $booking->guests->first()?->email }}
+                        <th style="min-width:120px;">Boekingsdatum</th>
+                        <th style="min-width:100px;">Slot</th>
+                        <th style="min-width:60px;">Duur</th>
+                        <th style="min-width:150px;">Gast</th>
+                        <th style="min-width:80px;">Status</th>
+                        <th style="min-width:100px;">Acties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($bookings as $booking)
+                        <tr>
+                            <td>{{ $booking->booked_at->format('d-m-Y H:i') }}</td>
+                            <td>{{ $booking->slotInstance?->starts_at?->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
+                            <td>{{ $booking->duration_minutes ?? $booking->slotInstance?->starts_at?->diffInMinutes($booking->slotInstance?->ends_at) }} min</td>
+                            <td>
+                                <strong>{{ $booking->guests->first()?->name }}</strong>
+                                <div class="muted" style="font-size:0.85rem;">
+                                    @if ($booking->guests->first()?->phone)
+                                        {{ $booking->guests->first()?->phone }}
+                                    @endif
+                                    @if ($booking->guests->first()?->email)
+                                        <br>{{ $booking->guests->first()?->email }}
+                                    @endif
+                                </div>
+                            </td>
+                            <td><strong>{{ $booking->status }}</strong></td>
+                            <td>
+                                @if ($booking->status === 'confirmed')
+                                    <form method="post" action="{{ route('admin.bookings.cancel', $booking) }}" style="margin:0;">
+                                        @csrf
+                                        <button type="submit" style="width:auto; padding:6px 10px; font-size:0.9rem;">Annuleer</button>
+                                    </form>
+                                @else
+                                    <span class="muted">-</span>
                                 @endif
-                            </div>
-                        </td>
-                        <td>{{ $booking->status }}</td>
-                        <td>
-                            @if ($booking->status === 'confirmed')
-                                <form method="post" action="{{ route('admin.bookings.cancel', $booking) }}">
-                                    @csrf
-                                    <button type="submit">Annuleer</button>
-                                </form>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="muted">Geen boekingen gevonden.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="muted">Geen boekingen gevonden.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-        {{ $bookings->links() }}
+        <div style="margin-top:16px;">
+            {{ $bookings->links() }}
     </div>
 @endsection

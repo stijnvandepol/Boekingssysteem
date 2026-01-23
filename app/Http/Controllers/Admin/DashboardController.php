@@ -36,6 +36,10 @@ class DashboardController extends Controller
         $weekDays = collect(range(0, 6))
             ->map(fn ($offset) => $weekStart->copy()->addDays($offset));
 
+        $calendarStartHour = 8;
+        $calendarEndHour = 20;
+        $calendarHours = collect(range($calendarStartHour, $calendarEndHour - 1));
+
         $now = Carbon::now($resource->timezone);
         $minute = (int) (ceil($now->minute / 15) * 15);
         if ($minute === 60) {
@@ -60,6 +64,9 @@ class DashboardController extends Controller
             'blocksByDate' => $blocksByDate,
             'slotsByDate' => $slots,
             'weekDays' => $weekDays,
+            'calendarHours' => $calendarHours,
+            'calendarStartHour' => $calendarStartHour,
+            'calendarEndHour' => $calendarEndHour,
             'defaultStart' => $defaultStart,
             'defaultEnd' => $defaultEnd,
             'recentBookings' => $recentBookings,
