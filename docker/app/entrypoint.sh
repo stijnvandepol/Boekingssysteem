@@ -7,7 +7,14 @@ if [ ! -f /var/www/.env ] && [ -f /var/www/.env.example ]; then
 fi
 
 if [ -z "${APP_KEY:-}" ]; then
-  su-exec app php artisan key:generate --force
+  if [ -f /var/www/.env ] && grep -q '^APP_KEY=base64:' /var/www/.env; then
+    APP_KEY=$(grep '^APP_KEY=' /var/www/.env | cut -d= -f2-)
+    export APP_KEY
+  else
+    su-exec app php artisan key:generate --force
+    APP_KEY=$(grep '^APP_KEY=' /var/www/.env | cut -d= -f2-)
+    export APP_KEY
+  fi
 fi
 
 if [ "${AUTO_MIGRATE:-false}" = "true" ]; then

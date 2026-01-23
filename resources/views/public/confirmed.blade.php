@@ -12,6 +12,8 @@
             {{ $booking->slotInstance->starts_at->setTimezone($booking->resource->timezone)->format('d-m-Y H:i') }}
             -
             {{ $booking->slotInstance->ends_at->setTimezone($booking->resource->timezone)->format('H:i') }}
+            <br>
+            Duur: {{ $booking->duration_minutes ?? $booking->slotInstance->starts_at->diffInMinutes($booking->slotInstance->ends_at) }} min
         </div>
     </div>
 

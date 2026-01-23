@@ -118,4 +118,92 @@ class AvailabilityService
             ]);
         });
     }
+
+    public function updateBlock(AvailabilityBlock $block, array $data, User $user): AvailabilityBlock
+    {
+        return DB::transaction(function () use ($block, $data, $user) {
+            $locked = AvailabilityBlock::with('resource')->whereKey($block->id)->lockForUpdate()->firstOrFail();
+
+            $hasBookings = $locked->slotInstances()
+                ->where('booked_count', '>', 0)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($hasBookings) {
+                throw ValidationException::withMessages([
+                    'block' => 'Dit blok heeft al boekingen en kan niet worden gewijzigd.',
+                ]);
+            }
+
+            $startsAt = Carbon::parse($data['starts_at'], $locked->resource->timezone)->utc();
+            $endsAt = Carbon::parse($data['ends_at'], $locked->resource->timezone)->utc();
+            $slotLength = (int) $data['slot_length_minutes'];
+            $capacity = (int) $data['capacity'];
+
+            $overlap = SlotInstance::where('resource_id', $locked->resource_id)
+                ->where('availability_block_id', '!=', $locked->id)
+                ->where('starts_at', '<', $endsAt)
+                ->where('ends_at', '>', $startsAt)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($overlap) {
+                throw ValidationException::withMessages([
+                    'starts_at' => 'Er bestaan al slots in dit tijdsbereik.',
+                ]);
+            }
+
+            $locked->slotInstances()->delete();
+
+            $locked->update([
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+                'slot_length_minutes' => $slotLength,
+                'capacity' => $capacity,
+            ]);
+
+            $slots = [];
+            $cursor = $startsAt->copy();
+            while ($cursor->copy()->addMinutes($slotLength)->lte($endsAt)) {
+                $slotEnd = $cursor->copy()->addMinutes($slotLength);
+                $slots[] = [
+                    'resource_id' => $locked->resource_id,
+                    'availability_block_id' => $locked->id,
+                    'starts_at' => $cursor->copy(),
+                    'ends_at' => $slotEnd,
+                    'capacity' => $capacity,
+                    'booked_count' => 0,
+                    'status' => 'open',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                $cursor = $slotEnd;
+            }
+
+            if (count($slots) === 0) {
+                throw ValidationException::withMessages([
+                    'ends_at' => 'De eindtijd levert geen volledige slots op.',
+                ]);
+            }
+
+            foreach (array_chunk($slots, 500) as $chunk) {
+                SlotInstance::insert($chunk);
+            }
+
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'availability.updated',
+                'auditable_type' => AvailabilityBlock::class,
+                'auditable_id' => $locked->id,
+                'metadata' => [
+                    'resource_id' => $locked->resource_id,
+                    'slot_length_minutes' => $slotLength,
+                    'capacity' => $capacity,
+                ],
+                'created_at' => now(),
+            ]);
+
+            return $locked;
+        });
+    }
 }

@@ -28,8 +28,10 @@
                 <tr>
                     <th>Boekingsdatum</th>
                     <th>Slot</th>
+                    <th>Duur</th>
                     <th>Gast</th>
                     <th>Status</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -37,12 +39,29 @@
                     <tr>
                         <td>{{ $booking->booked_at->format('d-m-Y H:i') }}</td>
                         <td>{{ $booking->slotInstance?->starts_at?->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
-                        <td>{{ $booking->guests->first()?->name }} ({{ $booking->guests->first()?->email }})</td>
+                        <td>{{ $booking->duration_minutes ?? $booking->slotInstance?->starts_at?->diffInMinutes($booking->slotInstance?->ends_at) }} min</td>
+                        <td>
+                            {{ $booking->guests->first()?->name }}
+                            <div class="muted">
+                                {{ $booking->guests->first()?->phone }}
+                                @if ($booking->guests->first()?->email)
+                                    — {{ $booking->guests->first()?->email }}
+                                @endif
+                            </div>
+                        </td>
                         <td>{{ $booking->status }}</td>
+                        <td>
+                            @if ($booking->status === 'confirmed')
+                                <form method="post" action="{{ route('admin.bookings.cancel', $booking) }}">
+                                    @csrf
+                                    <button type="submit">Annuleer</button>
+                                </form>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="muted">Geen boekingen gevonden.</td>
+                        <td colspan="6" class="muted">Geen boekingen gevonden.</td>
                     </tr>
                 @endforelse
             </tbody>

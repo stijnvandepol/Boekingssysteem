@@ -26,10 +26,11 @@ class DatabaseSeeder extends Seeder
         Resource::firstOrCreate(
             ['user_id' => $admin->id],
             [
-                'name' => 'Rens Booking',
+                'name' => 'Beheerder 1',
                 'timezone' => 'Europe/Amsterdam',
                 'default_slot_length_minutes' => 30,
                 'default_capacity' => 1,
+                'min_notice_minutes' => 0,
                 'is_active' => true,
             ]
         );

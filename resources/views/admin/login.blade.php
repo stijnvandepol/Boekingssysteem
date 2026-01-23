@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('content')
     @include('partials.alerts')
@@ -6,7 +6,7 @@
         <h2>Admin login</h2>
         <form method="post" action="{{ route('admin.login.submit') }}">
             @csrf
-            <label for="email">E‑mail</label>
+            <label for="email">E-mail</label>
             <input type="email" name="email" id="email" required value="{{ old('email') }}">
 
             <label for="password">Wachtwoord</label>

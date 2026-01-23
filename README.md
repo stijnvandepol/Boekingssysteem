@@ -1,4 +1,4 @@
-# Rens Boekingssysteem
+# Boekingssysteem
 
 Productieklare Laravel booking app die volledig in Docker draait.
 

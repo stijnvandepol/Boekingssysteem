@@ -1,4 +1,4 @@
-@php use Carbon\Carbon; @endphp
+﻿@php use Carbon\Carbon; @endphp
 @extends('layouts.admin')
 
 @section('content')
@@ -12,10 +12,10 @@
                 <input type="hidden" name="resource_id" value="{{ $resource->id }}">
 
                 <label for="starts_at">Start</label>
-                <input type="datetime-local" name="starts_at" id="starts_at" required>
+                <input type="datetime-local" name="starts_at" id="starts_at" required value="{{ $defaultStart->format('Y-m-d\\TH:i') }}">
 
                 <label for="ends_at">Einde</label>
-                <input type="datetime-local" name="ends_at" id="ends_at" required>
+                <input type="datetime-local" name="ends_at" id="ends_at" required value="{{ $defaultEnd->format('Y-m-d\\TH:i') }}">
 
                 <label for="slot_length_minutes">Slotlengte (min)</label>
                 <select name="slot_length_minutes" id="slot_length_minutes" required>
@@ -52,6 +52,9 @@
                 <label for="default_capacity">Standaard capaciteit</label>
                 <input type="number" min="1" max="50" name="default_capacity" id="default_capacity" value="{{ $resource->default_capacity }}" required>
 
+                <label for="min_notice_minutes">Minimale boekingstijd vooraf (min)</label>
+                <input type="number" min="0" max="1440" name="min_notice_minutes" id="min_notice_minutes" value="{{ $resource->min_notice_minutes }}" required>
+
                 <label for="is_active">Actief</label>
                 <select name="is_active" id="is_active" required>
                     <option value="1" @selected($resource->is_active)>Ja</option>
@@ -64,60 +67,78 @@
     </div>
 
     <div class="card" style="margin-top:16px;">
-        <h2>Weekoverzicht ({{ $weekStart->format('d-m-Y') }})</h2>
-        @foreach ($slotsByDate as $date => $slots)
-            <h3>{{ Carbon::parse($date)->format('d-m-Y') }}</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Start</th>
-                        <th>Einde</th>
-                        <th>Capaciteit</th>
-                        <th>Geboekt</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($slots as $slot)
-                        <tr>
-                            <td>{{ $slot->starts_at->setTimezone($resource->timezone)->format('H:i') }}</td>
-                            <td>{{ $slot->ends_at->setTimezone($resource->timezone)->format('H:i') }}</td>
-                            <td>{{ $slot->capacity }}</td>
-                            <td>{{ $slot->booked_count }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endforeach
-    </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <h2>Weekoverzicht ({{ $weekStart->format('d-m-Y') }})</h2>
+            <div style="display:flex; gap:8px;">
+                <a class="button" href="{{ route('admin.dashboard', ['week' => $weekOffset - 1]) }}">Vorige week</a>
+                <a class="button" href="{{ route('admin.dashboard') }}">Huidige week</a>
+                <a class="button" href="{{ route('admin.dashboard', ['week' => $weekOffset + 1]) }}">Volgende week</a>
+            </div>
+        </div>
 
-    <div class="card" style="margin-top:16px;">
-        <h2>Beschikbaarheidsblokken</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Start</th>
-                    <th>Einde</th>
-                    <th>Slots</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($blocks as $block)
-                    <tr>
-                        <td>{{ $block->starts_at->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
-                        <td>{{ $block->ends_at->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
-                        <td>{{ $block->slot_length_minutes }} min / cap {{ $block->capacity }}</td>
-                        <td>
-                            <form method="post" action="{{ route('admin.availability.destroy', $block) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit">Verwijderen</button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+        @foreach ($weekDays as $day)
+            @php
+                $dayKey = $day->toDateString();
+                $daySlots = $slotsByDate->get($dayKey, collect());
+                $dayBlocks = $blocksByDate->get($dayKey, collect());
+            @endphp
+            <h3>{{ $day->locale('nl')->isoFormat('dddd D MMMM') }}</h3>
+
+            @if ($daySlots->isEmpty())
+                <div class="muted">Geen slots.</div>
+            @else
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Start</th>
+                            <th>Einde</th>
+                            <th>Capaciteit</th>
+                            <th>Geboekt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($daySlots as $slot)
+                            <tr>
+                                <td>{{ $slot->starts_at->setTimezone($resource->timezone)->format('H:i') }}</td>
+                                <td>{{ $slot->ends_at->setTimezone($resource->timezone)->format('H:i') }}</td>
+                                <td>{{ $slot->capacity }}</td>
+                                <td>{{ $slot->booked_count }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+
+            @if ($dayBlocks->isNotEmpty())
+                <table style="margin-top:8px;">
+                    <thead>
+                        <tr>
+                            <th>Beschikbaarheidsblok</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($dayBlocks as $block)
+                            <tr>
+                                <td>
+                                    {{ $block->starts_at->setTimezone($resource->timezone)->format('H:i') }}
+                                    - {{ $block->ends_at->setTimezone($resource->timezone)->format('H:i') }}
+                                    ({{ $block->slot_length_minutes }} min / cap {{ $block->capacity }})
+                                </td>
+                                <td style="display:flex; gap:8px; align-items:center;">
+                                    <a class="button" href="{{ route('admin.availability.edit', $block) }}">Bewerk</a>
+                                    <form method="post" action="{{ route('admin.availability.destroy', $block) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit">Verwijderen</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        @endforeach
     </div>
 
     <div class="card" style="margin-top:16px;">

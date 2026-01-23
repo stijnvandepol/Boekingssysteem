@@ -16,12 +16,14 @@ class Booking extends Model
         'idempotency_key',
         'total_guests',
         'booked_at',
+        'duration_minutes',
     ];
 
     protected function casts(): array
     {
         return [
             'booked_at' => 'datetime',
+            'duration_minutes' => 'integer',
         ];
     }
 
