@@ -19,19 +19,22 @@ Route::post('/booking', [PublicBookingController::class, 'store'])
 Route::get('/booking/confirmed', [PublicBookingController::class, 'confirmed'])->name('booking.confirmed');
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/login', function () {
+        return view('public.login');
+    })->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {
+        Route::get('', [AuthController::class, 'showLogin'])->name('login');
         Route::get('login', [AuthController::class, 'showLogin'])->name('login');
         Route::post('login', [AuthController::class, 'login'])->name('login.submit');
     });
 
     Route::middleware(['auth', 'admin', 'throttle:admin'])->group(function () {
+        Route::get('', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('settings', [SettingsController::class, 'index'])->name('settings');
         Route::post('availability', [AvailabilityController::class, 'store'])->name('availability.store');
         Route::get('availability/{block}/edit', [AvailabilityController::class, 'edit'])->name('availability.edit');
