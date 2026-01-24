@@ -77,17 +77,6 @@
                     <input type="hidden" name="idempotency_key" value="{{ $idempotencyKey }}">
                     <input type="hidden" name="slot_instance_id" value="{{ $selectedSlot->id }}">
 
-                    <label for="duration_minutes">Duur (minuten)</label>
-                    <select name="duration_minutes" id="duration_minutes" required>
-                        @foreach ($durations as $duration)
-                            @if ($duration <= $maxDuration)
-                                <option value="{{ $duration }}" @selected((int) old('duration_minutes', $maxDuration) === $duration)>
-                                    {{ $duration }} min
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
-
                     <label for="name">Naam *</label>
                     <input type="text" name="name" id="name" required value="{{ old('name') }}" placeholder="Voornaam Achternaam">
 

@@ -5,31 +5,20 @@
     @include('partials.alerts')
 
     <div class="card" id="availability-form">
-            <h2>📅 Beschikbaarheid toevoegen</h2>
-            <div class="muted" style="margin-bottom: 16px; font-size: 0.9rem;">Selecteer blokken in het weekrooster of vul handmatig in.</div>
-            <form method="post" action="{{ route('admin.availability.store') }}">
-                @csrf
-                <input type="hidden" name="resource_id" value="{{ $resource->id }}">
-                <input type="hidden" name="ranges" id="ranges" value="">
-
-                <label for="starts_at">Startdatum en tijd</label>
-                <input type="datetime-local" name="starts_at" id="starts_at" required value="{{ $defaultStart->format('Y-m-d\\TH:i') }}">
-
-                <label for="ends_at">Einddatum en tijd</label>
-                <input type="datetime-local" name="ends_at" id="ends_at" required value="{{ $defaultEnd->format('Y-m-d\\TH:i') }}">
-
-                <label for="slot_length_minutes">Slotlengte (minuten)</label>
-                <select name="slot_length_minutes" id="slot_length_minutes" required>
-                    @foreach (config('booking.allowed_slot_lengths') as $length)
-                        <option value="{{ $length }}" @selected($length === $resource->default_slot_length_minutes)>{{ $length }} min</option>
-                    @endforeach
-                </select>
-
-                <label for="capacity">Capaciteit</label>
-                <input type="number" min="1" max="50" name="capacity" id="capacity" value="{{ $resource->default_capacity }}" required>
-
-                <button type="submit">➕ Voeg toe</button>
-            </form>
+        <h2>📅 Beschikbaarheid toevoegen</h2>
+        <div class="muted" style="margin-bottom: 16px; font-size: 0.9rem;">
+            Selecteer blokken in het rooster hieronder; slotlengte ({{ $resource->default_slot_length_minutes }} min) en capaciteit ({{ $resource->default_capacity }}) komen uit je instellingen.
+        </div>
+        <form method="post" action="{{ route('admin.availability.store') }}">
+            @csrf
+            <input type="hidden" name="resource_id" value="{{ $resource->id }}">
+            <input type="hidden" name="ranges" id="ranges" value="">
+            <input type="hidden" name="starts_at" id="starts_at" value="{{ $defaultStart->format('Y-m-d\\TH:i') }}">
+            <input type="hidden" name="ends_at" id="ends_at" value="{{ $defaultEnd->format('Y-m-d\\TH:i') }}">
+            <input type="hidden" name="slot_length_minutes" id="slot_length_minutes" value="{{ $resource->default_slot_length_minutes }}">
+            <input type="hidden" name="capacity" id="capacity" value="{{ $resource->default_capacity }}">
+            <button type="submit" style="display: none;">Submit</button>
+        </form>
         </div>
 
     <div class="card" style="margin-top: 24px;">

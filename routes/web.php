@@ -27,13 +27,8 @@ Route::middleware('guest')->group(function () {
     })->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 });
+Route::get('/admin/login', fn () => redirect()->route('login'))->middleware('guest')->name('admin.login');
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::middleware('guest')->group(function () {
-        Route::get('', [AuthController::class, 'showLogin'])->name('login');
-        Route::get('login', [AuthController::class, 'showLogin'])->name('login');
-        Route::post('login', [AuthController::class, 'login'])->name('login.submit');
-    });
-
     Route::middleware(['auth', 'admin', 'throttle:admin'])->group(function () {
         Route::get('', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');

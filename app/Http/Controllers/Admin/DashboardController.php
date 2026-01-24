@@ -18,7 +18,8 @@ class DashboardController extends Controller
 
         $weekOffset = (int) $request->query('week', 0);
         $weekStart = Carbon::now($resource->timezone)->startOfWeek(Carbon::MONDAY)->addWeeks($weekOffset);
-        $weekEnd = $weekStart->copy()->addDays(7)->endOfDay();
+        // Inclusief maandag t/m zondag van de gekozen week
+        $weekEnd = $weekStart->copy()->addDays(6)->endOfDay();
 
         $blocks = AvailabilityBlock::where('resource_id', $resource->id)
             ->whereBetween('starts_at', [$weekStart->copy()->utc(), $weekEnd->copy()->utc()])
@@ -37,7 +38,7 @@ class DashboardController extends Controller
             ->map(fn ($offset) => $weekStart->copy()->addDays($offset));
 
         $calendarStartHour = 8;
-        $calendarEndHour = 20;
+        $calendarEndHour = 22;
         $calendarHours = collect(range($calendarStartHour, $calendarEndHour - 1));
 
         $now = Carbon::now($resource->timezone);

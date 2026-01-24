@@ -17,6 +17,10 @@ class BookingController extends Controller
     {
         $resource = Resource::where('user_id', $request->user()->id)->firstOrFail();
 
+        $weekOffset = (int) $request->integer('week', 0);
+        $weekStart = Carbon::now($resource->timezone)->startOfWeek()->addWeeks($weekOffset);
+        $weekEnd = $weekStart->copy()->endOfWeek();
+
         $query = Booking::with(['slotInstance', 'guests'])
             ->where('resource_id', $resource->id)
             ->orderByDesc('booked_at');
@@ -32,9 +36,28 @@ class BookingController extends Controller
 
         $bookings = $query->paginate(20)->withQueryString();
 
+        $weeklyBookings = Booking::with(['slotInstance', 'guests'])
+            ->where('resource_id', $resource->id)
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->whereHas('slotInstance', function ($slotQuery) use ($weekStart, $weekEnd) {
+                $slotQuery->whereBetween('starts_at', [
+                    $weekStart->copy()->startOfDay()->utc(),
+                    $weekEnd->copy()->endOfDay()->utc(),
+                ]);
+            })
+            ->get()
+            ->sortBy(fn ($booking) => $booking->slotInstance?->starts_at ?? $booking->booked_at);
+
+        $weekDays = collect(range(0, 6))->map(fn ($i) => $weekStart->copy()->addDays($i));
+
         return view('admin.bookings', [
             'resource' => $resource,
             'bookings' => $bookings,
+            'weekStart' => $weekStart,
+            'weekEnd' => $weekEnd,
+            'weekOffset' => $weekOffset,
+            'weekDays' => $weekDays,
+            'weeklyBookings' => $weeklyBookings,
         ]);
     }
 

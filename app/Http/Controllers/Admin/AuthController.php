@@ -10,7 +10,7 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('admin.login');
+        return redirect()->route('login');
     }
 
     public function login(AdminLoginRequest $request)
@@ -36,6 +36,6 @@ class AuthController extends Controller
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
-        return redirect()->route('admin.login');
+        return redirect()->route('login');
     }
 }

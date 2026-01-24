@@ -46,15 +46,12 @@ class PublicBookingController extends Controller
         }
 
         $idempotencyKey = old('idempotency_key') ?? (string) Str::uuid();
-        $durations = config('booking.allowed_durations', config('booking.allowed_slot_lengths'));
-
         return view('public.booking', [
             'slotsByDate' => $slotsByDate,
             'selectedSlot' => $selectedSlot,
             'idempotencyKey' => $idempotencyKey,
             'timezone' => $timezone,
             'today' => $now->copy()->startOfDay(),
-            'durations' => $durations,
         ]);
     }
 
