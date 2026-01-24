@@ -25,7 +25,8 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
+        <div style="overflow-x: auto; margin-top: 16px; -webkit-overflow-scrolling: touch;">
+            <div style="display: grid; grid-template-columns: repeat(7, minmax(160px, 1fr)); gap: 12px; min-width: 100%;">
             @foreach ($weekDays as $day)
                 @php
                     $dayKey = $day->toDateString();
@@ -72,31 +73,62 @@
                     @endif
                 </div>
             @endforeach
+            </div>
         </div>
     </div>
 
     <div class="card">
-        <h2>Boekingen lijst</h2>
-        <form method="get" style="display: grid; gap: 12px; grid-template-columns: 1fr 1fr auto; margin-bottom: 20px; align-items: flex-end;">
+        <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+            <h2 style="margin: 0;">Boekingen lijst</h2>
+            <details style="margin: 0;">
+                <summary class="button" style="padding: 10px 12px; cursor: pointer;">+ Handmatig boeken</summary>
+                <div style="margin-top: 12px; padding: 12px; border: 1px solid var(--border-light); border-radius: 10px; background: #fff;">
+                    <style>
+                        .manual-booking-form { display: grid; gap: 10px; grid-template-columns: 1fr; align-items: end; }
+                        @media (min-width: 768px) {
+                            .manual-booking-form { grid-template-columns: 1.6fr 1.6fr 1fr; }
+                        }
+                    </style>
+                    <form method="post" action="{{ route('admin.bookings.manual') }}" class="manual-booking-form">
+                        @csrf
+                        <div>
+                            <label for="start_at">Begintijd</label>
+                            <input type="datetime-local" name="start_at" id="start_at" required style="margin-bottom: 0;">
+                        </div>
+                        <div>
+                            <label for="name">Naam</label>
+                            <input type="text" name="name" id="name" required placeholder="Gastnaam" style="margin-bottom: 0;">
+                        </div>
+                        <button type="submit" style="width: 100%; padding: 12px 14px;">Voeg toe</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+
+        <style>
+            .filter-form { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 20px; align-items: end; }
+            @media (min-width: 768px) {
+                .filter-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            }
+        </style>
+        <form method="get" class="filter-form">
             <div>
                 <label for="date">Filterdatum (boekingsdatum)</label>
-                <input type="date" name="date" id="date" value="{{ request('date') }}">
+                <input type="date" name="date" id="date" value="{{ request('date') }}" style="margin-bottom: 0;">
             </div>
             <div>
                 <label for="status">Status</label>
-                <select name="status" id="status">
+                <select name="status" id="status" style="margin-bottom: 0;">
                     <option value="">Alles</option>
                     <option value="confirmed" @selected(request('status') === 'confirmed')>Bevestigd</option>
                     <option value="cancelled" @selected(request('status') === 'cancelled')>Geannuleerd</option>
                 </select>
             </div>
-            <div>
-                <button type="submit" style="padding: 12px 16px;">Zoeken</button>
-            </div>
+            <button type="submit" style="padding: 12px 16px; width: 100%;">Zoeken</button>
         </form>
 
-        <div style="overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-light);">
-            <table style="margin: 0;">
+        <div style="overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-light); -webkit-overflow-scrolling: touch;">
+            <table style="margin: 0; min-width: 700px;">
                 <thead>
                     <tr>
                         <th>Geboekt op</th>
@@ -165,4 +197,3 @@
         @endif
     </div>
 @endsection
-

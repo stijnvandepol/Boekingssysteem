@@ -9,6 +9,7 @@ use App\Models\Resource;
 use App\Models\SlotInstance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class DashboardController extends Controller
 {
@@ -17,7 +18,8 @@ class DashboardController extends Controller
         $resource = Resource::where('user_id', $request->user()->id)->firstOrFail();
 
         $weekOffset = (int) $request->query('week', 0);
-        $weekStart = Carbon::now($resource->timezone)->startOfWeek(Carbon::MONDAY)->addWeeks($weekOffset);
+        $now = $this->currentTime($resource->timezone);
+        $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->addWeeks($weekOffset);
         // Inclusief maandag t/m zondag van de gekozen week
         $weekEnd = $weekStart->copy()->addDays(6)->endOfDay();
 
@@ -41,7 +43,6 @@ class DashboardController extends Controller
         $calendarEndHour = 22;
         $calendarHours = collect(range($calendarStartHour, $calendarEndHour - 1));
 
-        $now = Carbon::now($resource->timezone);
         $minute = (int) (ceil($now->minute / 15) * 15);
         if ($minute === 60) {
             $now->addHour()->minute(0);
@@ -65,5 +66,19 @@ class DashboardController extends Controller
             'defaultStart' => $defaultStart,
             'defaultEnd' => $defaultEnd,
         ]);
+    }
+
+    private function currentTime(string $timezone): Carbon
+    {
+        try {
+            $response = Http::timeout(3)->get("https://worldtimeapi.org/api/timezone/{$timezone}");
+            if ($response->ok() && ($dt = $response->json('datetime'))) {
+                return Carbon::parse($dt)->setTimezone($timezone);
+            }
+        } catch (\Throwable $e) {
+            // fall back to server time
+        }
+
+        return Carbon::now($timezone);
     }
 }

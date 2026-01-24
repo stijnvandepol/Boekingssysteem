@@ -70,6 +70,40 @@
             font-size: 0.85rem;
         }
 
+        .nav {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav a,
+        .nav button {
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            background: rgba(255, 255, 255, 0.08);
+            color: #f8f9fb;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            letter-spacing: -0.1px;
+            transition: all 0.18s ease;
+        }
+
+        .nav a:hover,
+        .nav button:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .nav a.active {
+            background: #ffffff;
+            color: #0f172a;
+            border-color: #ffffff;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
         main {
             max-width: 1200px;
             margin: 24px auto;
@@ -80,6 +114,15 @@
             border: 1px solid var(--border-light);
             backdrop-filter: blur(8px);
             min-height: calc(100vh - 100px);
+        }
+
+        @media (max-width: 768px) {
+            main {
+                margin: 16px;
+                padding: 16px;
+                border-radius: 12px;
+                width: calc(100% - 32px);
+            }
         }
 
         a {
@@ -298,13 +341,6 @@
                 width: 100%;
             }
 
-            main {
-                margin: 12px;
-                padding: 16px;
-                width: calc(100% - 24px);
-                min-height: auto;
-            }
-
             .grid-2 {
                 grid-template-columns: 1fr;
             }
@@ -350,11 +386,11 @@
             <span class="muted">Admin</span>
         </div>
         @auth
-            <div class="inline">
-                <a href="{{ route('admin.dashboard') }}">Beschikbaarheid</a>
-                <a href="{{ route('admin.bookings.index') }}">Boekingen</a>
-                <a href="{{ route('admin.settings') }}">Instellingen</a>
-                <form method="post" action="{{ route('admin.logout') }}">
+            <div class="nav">
+                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Beschikbaarheid</a>
+                <a href="{{ route('admin.bookings.index') }}" class="{{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">Boekingen</a>
+                <a href="{{ route('admin.settings') }}" class="{{ request()->routeIs('admin.settings') ? 'active' : '' }}">Instellingen</a>
+                <form method="post" action="{{ route('admin.logout') }}" style="margin: 0;">
                     @csrf
                     <button type="submit">Uitloggen</button>
                 </form>

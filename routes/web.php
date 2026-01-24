@@ -39,6 +39,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('availability/{block}', [AvailabilityController::class, 'update'])->name('availability.update');
         Route::delete('availability/{block}', [AvailabilityController::class, 'destroy'])->name('availability.destroy');
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::post('bookings/manual', [BookingController::class, 'storeManual'])->name('bookings.manual');
         Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
         Route::put('resource', [ResourceController::class, 'update'])->name('resource.update');
     });

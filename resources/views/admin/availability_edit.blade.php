@@ -3,7 +3,7 @@
 @section('content')
     @include('partials.alerts')
 
-    <div style="max-width: 600px;">
+    <div style="max-width: 600px; width: 100%;">
         <div class="card">
             <h2>✏️ Beschikbaarheid aanpassen</h2>
             <form method="post" action="{{ route('admin.availability.update', $block) }}">

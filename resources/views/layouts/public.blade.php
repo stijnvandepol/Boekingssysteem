@@ -203,6 +203,39 @@
         }
 
         .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            main {
+                margin: 16px;
+                padding: 16px;
+                border-radius: 12px;
+                width: calc(100% - 32px);
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            input, select, button {
+                font-size: 16px;
+                padding: 12px;
+            }
+        }
+
+        @media (hover: none) {
+            input, select, button {
+                font-size: 16px;
+                padding: 12px;
+            }
+        }
     </style>
 </head>
 <body>

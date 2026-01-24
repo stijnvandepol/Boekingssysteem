@@ -5,10 +5,7 @@
     @include('partials.alerts')
 
     <div class="card" id="availability-form">
-        <h2>📅 Beschikbaarheid toevoegen</h2>
-        <div class="muted" style="margin-bottom: 16px; font-size: 0.9rem;">
-            Selecteer blokken in het rooster hieronder; slotlengte ({{ $resource->default_slot_length_minutes }} min) en capaciteit ({{ $resource->default_capacity }}) komen uit je instellingen.
-        </div>
+        <h2>📅 Beschikbaarheid</h2>
         <form method="post" action="{{ route('admin.availability.store') }}">
             @csrf
             <input type="hidden" name="resource_id" value="{{ $resource->id }}">
@@ -19,7 +16,7 @@
             <input type="hidden" name="capacity" id="capacity" value="{{ $resource->default_capacity }}">
             <button type="submit" style="display: none;">Submit</button>
         </form>
-        </div>
+    </div>
 
     <div class="card" style="margin-top: 24px;">
         <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
@@ -34,8 +31,8 @@
             </div>
         </div>
 
-        <div style="overflow-x: auto; margin-top: 16px; border-radius: 8px;">
-            <div style="display: grid; grid-template-columns: 70px repeat(7, 1fr); min-width: 100%; border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden;">
+        <div style="overflow-x: auto; margin-top: 16px; border-radius: 8px; -webkit-overflow-scrolling: touch;">
+            <div style="display: grid; grid-template-columns: 70px repeat(7, 1fr); min-width: 650px; border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden;">
                 <div style="background: rgba(5, 15, 31, 0.02); font-weight: 600; color: var(--ink); padding: 12px 8px; border-right: 1px solid var(--border-light); font-size: 0.85rem;">Tijd</div>
                 @foreach ($weekDays as $day)
                     <div style="background: rgba(5, 15, 31, 0.02); font-weight: 600; color: var(--ink); padding: 12px 8px; border-right: 1px solid var(--border-light); text-align: center; font-size: 0.85rem;">{{ $day->locale('nl')->isoFormat('ddd D/M') }}</div>
@@ -76,9 +73,9 @@
         </div>
 
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; align-items: center;">
-            <div class="muted" id="selection-summary" style="flex: 1; min-width: 150px;">Geen selectie.</div>
-            <button type="button" id="apply-selection" style="flex: 0; min-width: 120px; padding: 10px 14px;">Voeg toe</button>
-            <button type="button" id="clear-selection" class="button" style="flex: 0; min-width: 100px;">Wissen</button>
+            <div class="muted" id="selection-summary" style="flex: 1 1 100%; min-width: 150px; margin-bottom: 8px;">Geen selectie.</div>
+            <button type="button" id="apply-selection" style="flex: 1; min-width: 120px; padding: 10px 14px;">Voeg toe</button>
+            <button type="button" id="clear-selection" class="button" style="flex: 1; min-width: 100px; padding: 10px 14px;">Wissen</button>
         </div>
 
         <div style="margin-top: 24px;">
@@ -86,7 +83,8 @@
             @if ($blocks->isEmpty())
                 <div class="muted" style="padding: 20px; text-align: center; background: rgba(5, 15, 31, 0.02); border-radius: 8px; margin-top: 12px;">Nog geen beschikbaarheid toegevoegd.</div>
             @else
-                <table style="margin-top: 12px;">
+                <div style="overflow-x: auto; margin-top: 12px; -webkit-overflow-scrolling: touch;">
+                <table style="margin: 0; min-width: 600px;">
                     <thead>
                         <tr>
                             <th>Datum</th>
@@ -117,6 +115,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             @endif
         </div>
     </div>
@@ -262,3 +261,4 @@
     </script>
 
 @endsection
+
