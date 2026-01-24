@@ -4,8 +4,7 @@
 @section('content')
     @include('partials.alerts')
 
-    <div class="grid grid-2">
-        <div class="card" id="availability-form">
+    <div class="card" id="availability-form">
             <h2>📅 Beschikbaarheid toevoegen</h2>
             <div class="muted" style="margin-bottom: 16px; font-size: 0.9rem;">Selecteer blokken in het weekrooster of vul handmatig in.</div>
             <form method="post" action="{{ route('admin.availability.store') }}">
@@ -32,13 +31,6 @@
                 <button type="submit">➕ Voeg toe</button>
             </form>
         </div>
-
-        <div class="card">
-            <h2>⚙️ Instellingen</h2>
-            <div class="muted">Beheer globale instellingen en brontypes in het aparte instellingenmenu.</div>
-            <a class="button" style="margin-top: 20px; display: inline-block;" href="{{ route('admin.settings') }}">→ Naar instellingen</a>
-        </div>
-    </div>
 
     <div class="card" style="margin-top: 24px;">
         <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
