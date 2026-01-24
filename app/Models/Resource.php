@@ -15,6 +15,7 @@ class Resource extends Model
         'timezone',
         'default_slot_length_minutes',
         'default_capacity',
+        'min_notice_minutes',
         'is_active',
     ];
 
