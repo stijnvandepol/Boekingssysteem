@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookingRequest;
 use App\Models\Booking;
+use App\Models\Resource;
 use App\Models\SlotInstance;
 use App\Services\BookingService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -14,46 +16,32 @@ class PublicBookingController extends Controller
 {
     public function index(Request $request)
     {
-        $timezone = config('app.timezone', 'Europe/Amsterdam');
-        $now = now($timezone);
-        $rangeStart = $now->copy()->utc();
-        $rangeEnd = $now->copy()->addDays(30)->endOfDay()->utc();
+        $resources = Resource::query()->where('is_active', true)->orderBy('name')->get();
+        $resource = $resources->firstWhere('id', (int) $request->query('resource_id'));
 
-        $availableSlots = SlotInstance::query()
-            ->with('resource')
-            ->whereHas('resource', fn ($query) => $query->where('is_active', true))
-            ->whereBetween('starts_at', [$rangeStart, $rangeEnd])
-            ->where('status', 'open')
-            ->whereColumn('booked_count', '<', 'capacity')
-            ->orderBy('starts_at')
-            ->get();
-
-        $nowUtc = $now->copy()->utc();
-        $availableSlots = $availableSlots->filter(function ($slot) use ($nowUtc) {
-            $minNotice = (int) ($slot->resource?->min_notice_minutes ?? 0);
-            return $slot->starts_at->gte($nowUtc->copy()->addMinutes($minNotice));
-        });
-
-        $slotsByDate = $availableSlots
-            ->groupBy(fn ($slot) => $slot->starts_at->setTimezone($timezone)->toDateString())
-            ->sortKeys();
-
-        $selectedSlot = null;
-        $slotId = (int) $request->query('slot');
-        if ($slotId > 0) {
-            $selectedSlot = $availableSlots->firstWhere('id', $slotId);
+        $slots = collect();
+        $selectedDate = null;
+        if ($resource) {
+            $selectedDate = $request->query('date') ?: now($resource->timezone)->toDateString();
+            $dayStart = Carbon::parse($selectedDate, $resource->timezone)->startOfDay()->utc();
+            $dayEnd = Carbon::parse($selectedDate, $resource->timezone)->endOfDay()->utc();
+            $slots = SlotInstance::query()
+                ->where('resource_id', $resource->id)
+                ->whereBetween('starts_at', [$dayStart, $dayEnd])
+                ->where('status', 'open')
+                ->whereColumn('booked_count', '<', 'capacity')
+                ->orderBy('starts_at')
+                ->get();
         }
 
         $idempotencyKey = old('idempotency_key') ?? (string) Str::uuid();
-        $durations = config('booking.allowed_durations', config('booking.allowed_slot_lengths'));
 
         return view('public.booking', [
-            'slotsByDate' => $slotsByDate,
-            'selectedSlot' => $selectedSlot,
+            'resources' => $resources,
+            'resource' => $resource,
+            'slots' => $slots,
+            'selectedDate' => $selectedDate,
             'idempotencyKey' => $idempotencyKey,
-            'timezone' => $timezone,
-            'today' => $now->copy()->startOfDay(),
-            'durations' => $durations,
         ]);
     }
 
@@ -62,12 +50,7 @@ class PublicBookingController extends Controller
         $slot = SlotInstance::with('resource')->findOrFail($request->input('slot_instance_id'));
 
         try {
-            $booking = $bookingService->book(
-                $slot,
-                $request->only('name', 'email', 'phone'),
-                $request->input('idempotency_key'),
-                (int) $request->input('duration_minutes')
-            );
+            $booking = $bookingService->book($slot, $request->only('name', 'email', 'phone'), $request->input('idempotency_key'));
         } catch (ValidationException $exception) {
             return back()->withErrors($exception->errors())->withInput();
         }

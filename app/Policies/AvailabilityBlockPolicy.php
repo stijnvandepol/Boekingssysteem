@@ -16,9 +16,4 @@ class AvailabilityBlockPolicy
     {
         return $this->view($user, $block);
     }
-
-    public function update(User $user, AvailabilityBlock $block): bool
-    {
-        return $this->view($user, $block);
-    }
 }

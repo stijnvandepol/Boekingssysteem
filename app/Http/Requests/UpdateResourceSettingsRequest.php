@@ -23,7 +23,10 @@ class UpdateResourceSettingsRequest extends FormRequest
                 Rule::in(config('booking.allowed_slot_lengths')),
             ],
             'default_capacity' => ['required', 'integer', 'min:1', 'max:50'],
+<<<<<<< HEAD
             'min_notice_hours' => ['required', 'numeric', 'min:0', 'max:24'],
+=======
+>>>>>>> parent of 1568204 (errors fixed)
             'is_active' => ['required', 'boolean'],
         ];
     }

@@ -11,9 +11,4 @@ class BookingPolicy
     {
         return $user->role === 'admin' && $booking->resource->user_id === $user->id;
     }
-
-    public function cancel(User $user, Booking $booking): bool
-    {
-        return $this->view($user, $booking);
-    }
 }

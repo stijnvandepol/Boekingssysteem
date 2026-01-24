@@ -28,10 +28,10 @@ class BookingFlowTest extends TestCase
         ]);
 
         $service = app(BookingService::class);
-        $service->book($slot, ['name' => 'A', 'email' => 'a@example.com', 'phone' => '0612345678'], 'key-1', 30);
+        $service->book($slot, ['name' => 'A', 'email' => 'a@example.com'], 'key-1');
 
         $this->expectException(ValidationException::class);
-        $service->book($slot->fresh(), ['name' => 'B', 'email' => 'b@example.com', 'phone' => '0612345678'], 'key-2', 30);
+        $service->book($slot->fresh(), ['name' => 'B', 'email' => 'b@example.com'], 'key-2');
     }
 
     public function test_idempotency_returns_same_booking(): void
@@ -47,8 +47,8 @@ class BookingFlowTest extends TestCase
         ]);
 
         $service = app(BookingService::class);
-        $first = $service->book($slot, ['name' => 'A', 'email' => 'a@example.com', 'phone' => '0612345678'], 'idempotent-1', 30);
-        $second = $service->book($slot->fresh(), ['name' => 'A', 'email' => 'a@example.com', 'phone' => '0612345678'], 'idempotent-1', 30);
+        $first = $service->book($slot, ['name' => 'A', 'email' => 'a@example.com'], 'idempotent-1');
+        $second = $service->book($slot->fresh(), ['name' => 'A', 'email' => 'a@example.com'], 'idempotent-1');
 
         $this->assertEquals($first->id, $second->id);
         $this->assertEquals(1, Booking::count());

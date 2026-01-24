@@ -175,6 +175,7 @@ class AvailabilityService
             ]);
         });
     }
+<<<<<<< HEAD
 
     public function updateBlock(AvailabilityBlock $block, array $data, User $user): AvailabilityBlock
     {
@@ -269,4 +270,6 @@ class AvailabilityService
             return $locked;
         });
     }
+=======
+>>>>>>> parent of 1568204 (errors fixed)
 }

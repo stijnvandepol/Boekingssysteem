@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿# Boekingssysteem
+=======
+# Rens Boekingssysteem
+>>>>>>> parent of 1568204 (errors fixed)
 
 Productieklare Laravel booking app die volledig in Docker draait.
 

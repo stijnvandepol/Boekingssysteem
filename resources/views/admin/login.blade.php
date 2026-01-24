@@ -1,7 +1,8 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('content')
     @include('partials.alerts')
+<<<<<<< HEAD
     <div style="max-width: 420px; margin: 60px auto 0;">
         <div class="card">
             <h2 style="text-align: center; margin-bottom: 24px;">🔐 Beheerder login</h2>
@@ -11,6 +12,14 @@
                     <label for="email">E-mailadres</label>
                     <input type="email" name="email" id="email" required value="{{ old('email') }}" placeholder="admin@example.com" autofocus>
                 </div>
+=======
+    <div class="card">
+        <h2>Admin login</h2>
+        <form method="post" action="{{ route('admin.login.submit') }}">
+            @csrf
+            <label for="email">E‑mail</label>
+            <input type="email" name="email" id="email" required value="{{ old('email') }}">
+>>>>>>> parent of 1568204 (errors fixed)
 
                 <div>
                     <label for="password">Wachtwoord</label>

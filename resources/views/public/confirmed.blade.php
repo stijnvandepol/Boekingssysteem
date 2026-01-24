@@ -7,6 +7,7 @@
         Je afspraak is succesvol ingeplan!
     </div>
 
+<<<<<<< HEAD
     <div class="card" style="margin-top: 20px;">
         <h2 style="color: var(--accent); margin-bottom: 16px;">📋 Boekingsdetails</h2>
         <div style="background: rgba(5, 150, 105, 0.04); border-left: 4px solid var(--accent); padding: 16px; border-radius: 8px;">
@@ -31,6 +32,16 @@
                     <strong>{{ $booking->duration_minutes ?? $booking->slotInstance->starts_at->diffInMinutes($booking->slotInstance->ends_at) }} minuten</strong>
                 </div>
             </div>
+=======
+    <div class="card">
+        <strong>Details</strong>
+        <div class="muted">
+            Resource: {{ $booking->resource->name }}<br>
+            Datum/tijd:
+            {{ $booking->slotInstance->starts_at->setTimezone($booking->resource->timezone)->format('d-m-Y H:i') }}
+            -
+            {{ $booking->slotInstance->ends_at->setTimezone($booking->resource->timezone)->format('H:i') }}
+>>>>>>> parent of 1568204 (errors fixed)
         </div>
     </div>
 

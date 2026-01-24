@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Resource;
-use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -34,15 +33,5 @@ class BookingController extends Controller
             'resource' => $resource,
             'bookings' => $bookings,
         ]);
-    }
-
-    public function cancel(Request $request, Booking $booking, BookingService $service)
-    {
-        $booking->load('resource');
-        $this->authorize('cancel', $booking);
-
-        $service->cancel($booking, $request->user());
-
-        return redirect()->route('admin.bookings.index')->with('status', 'Boeking geannuleerd.');
     }
 }
