@@ -7,8 +7,8 @@
 
 ## Backups (MySQL)
 
-- Backup: `docker compose exec db mysqldump -u root -p$MYSQL_ROOT_PASSWORD rens > backup.sql`
-- Restore: `docker compose exec -T db mysql -u root -p$MYSQL_ROOT_PASSWORD rens < backup.sql`
+- Backup: `docker compose exec db mysqldump -u root -p$MYSQL_ROOT_PASSWORD boekingssysteem > backup.sql`
+- Restore: `docker compose exec -T db mysql -u root -p$MYSQL_ROOT_PASSWORD boekingssysteem < backup.sql`
 
 ## Queues
 

@@ -14,7 +14,7 @@ wait_for_db() {
   echo "Waiting for database connection..."
   tries=30
   while [ $tries -gt 0 ]; do
-    if php -r "try { new PDO('mysql:host='.(getenv('DB_HOST') ?: 'db').';port='.(getenv('DB_PORT') ?: '3306').';dbname='.(getenv('DB_DATABASE') ?: 'rens'), getenv('DB_USERNAME') ?: 'rens_app', getenv('DB_PASSWORD') ?: '', [PDO::ATTR_TIMEOUT => 2]); exit(0); } catch (Throwable \$e) { exit(1); }"; then
+    if php -r "try { new PDO('mysql:host='.(getenv('DB_HOST') ?: 'db').';port='.(getenv('DB_PORT') ?: '3306').';dbname='.(getenv('DB_DATABASE') ?: 'boekingssysteem'), getenv('DB_USERNAME') ?: 'boekingssysteem_app', getenv('DB_PASSWORD') ?: '', [PDO::ATTR_TIMEOUT => 2]); exit(0); } catch (Throwable \$e) { exit(1); }"; then
       echo "Database connection ok."
       return 0
     fi
