@@ -30,7 +30,8 @@ Route::middleware('guest')->group(function () {
 Route::get('/admin/login', fn () => redirect()->route('login'))->middleware('guest')->name('admin.login');
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin', 'throttle:admin'])->group(function () {
-        Route::get('', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('', fn () => redirect()->route('admin.bookings.index'));
+        Route::get('availability', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('settings', [SettingsController::class, 'index'])->name('settings');
         Route::post('availability', [AvailabilityController::class, 'store'])->name('availability.store');

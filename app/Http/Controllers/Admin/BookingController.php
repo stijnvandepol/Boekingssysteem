@@ -36,9 +36,10 @@ class BookingController extends Controller
 
         $bookings = $query->paginate(20)->withQueryString();
 
+        // Weekagenda: toon alleen bevestigde boekingen, ook als lijstfilter op geannuleerd staat
         $weeklyBookings = Booking::with(['slotInstance', 'guests'])
             ->where('resource_id', $resource->id)
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->where('status', 'confirmed')
             ->whereHas('slotInstance', function ($slotQuery) use ($weekStart, $weekEnd) {
                 $slotQuery->whereBetween('starts_at', [
                     $weekStart->copy()->startOfDay()->utc(),

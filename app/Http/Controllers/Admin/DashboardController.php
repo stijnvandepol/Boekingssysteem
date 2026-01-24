@@ -51,12 +51,6 @@ class DashboardController extends Controller
         $defaultStart = $now->copy()->second(0);
         $defaultEnd = $defaultStart->copy()->addHour();
 
-        $recentBookings = Booking::with('slotInstance')
-            ->where('resource_id', $resource->id)
-            ->orderByDesc('booked_at')
-            ->limit(5)
-            ->get();
-
         return view('admin.dashboard', [
             'resource' => $resource,
             'weekStart' => $weekStart,
@@ -70,7 +64,6 @@ class DashboardController extends Controller
             'calendarEndHour' => $calendarEndHour,
             'defaultStart' => $defaultStart,
             'defaultEnd' => $defaultEnd,
-            'recentBookings' => $recentBookings,
         ]);
     }
 }

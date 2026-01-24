@@ -351,7 +351,7 @@
         </div>
         @auth
             <div class="inline">
-                <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+                <a href="{{ route('admin.dashboard') }}">Beschikbaarheid</a>
                 <a href="{{ route('admin.bookings.index') }}">Boekingen</a>
                 <a href="{{ route('admin.settings') }}">Instellingen</a>
                 <form method="post" action="{{ route('admin.logout') }}">

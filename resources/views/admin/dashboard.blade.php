@@ -261,33 +261,4 @@
         });
     </script>
 
-    <div class="card" style="margin-top: 24px;">
-        <h2>📝 Recente boekingen</h2>
-        @if($recentBookings->count() > 0)
-            <table style="margin-top: 12px;">
-                <thead>
-                    <tr>
-                        <th>Geboekt op</th>
-                        <th>Slottijd</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($recentBookings as $booking)
-                        <tr>
-                            <td>{{ $booking->booked_at->format('d-m H:i') }}</td>
-                            <td>
-                                @if($booking->slotInstance?->starts_at)
-                                    {{ $booking->slotInstance->starts_at->setTimezone($resource->timezone)->format('d-m H:i') }}
-                                @else
-                                    <span class="muted">-</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <div class="muted" style="padding: 20px; text-align: center; background: rgba(5, 15, 31, 0.02); border-radius: 8px; margin-top: 12px;">Nog geen boekingen.</div>
-        @endif
-    </div>
 @endsection
