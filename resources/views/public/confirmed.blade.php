@@ -7,7 +7,6 @@
         Je afspraak is succesvol ingeplan!
     </div>
 
-<<<<<<< HEAD
     <div class="card" style="margin-top: 20px;">
         <h2 style="color: var(--accent); margin-bottom: 16px;">📋 Boekingsdetails</h2>
         <div style="background: rgba(5, 150, 105, 0.04); border-left: 4px solid var(--accent); padding: 16px; border-radius: 8px;">
@@ -32,16 +31,14 @@
                     <strong>{{ $booking->duration_minutes ?? $booking->slotInstance->starts_at->diffInMinutes($booking->slotInstance->ends_at) }} minuten</strong>
                 </div>
             </div>
-=======
-    <div class="card">
-        <strong>Details</strong>
-        <div class="muted">
-            Resource: {{ $booking->resource->name }}<br>
-            Datum/tijd:
-            {{ $booking->slotInstance->starts_at->setTimezone($booking->resource->timezone)->format('d-m-Y H:i') }}
-            -
-            {{ $booking->slotInstance->ends_at->setTimezone($booking->resource->timezone)->format('H:i') }}
->>>>>>> parent of 1568204 (errors fixed)
+        </div>
+
+        @php
+            $icsUrl = URL::signedRoute('booking.ics', ['booking' => $booking->id]);
+        @endphp
+        <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="{{ $icsUrl }}" class="button" style="display: inline-block; padding: 12px 16px; width: auto;">➕ Voeg toe aan agenda (ICS)</a>
+            <a href="https://www.google.com/calendar/render?action=TEMPLATE&text={{ urlencode(config('app.name').' - '.$booking->resource->name) }}&dates={{ $booking->slotInstance->starts_at->setTimezone('UTC')->format('Ymd\\THis\\Z') }}/{{ $booking->slotInstance->ends_at->setTimezone('UTC')->format('Ymd\\THis\\Z') }}&details={{ urlencode('Afspraak met '.$booking->resource->name) }}&ctz={{ urlencode($booking->resource->timezone) }}" target="_blank" rel="noopener" class="button" style="display: inline-block; padding: 12px 16px; width: auto;">📆 Voeg toe in Google Calendar</a>
         </div>
     </div>
 

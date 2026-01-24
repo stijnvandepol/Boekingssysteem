@@ -13,19 +13,11 @@
                 <input type="hidden" name="resource_id" value="{{ $resource->id }}">
                 <input type="hidden" name="ranges" id="ranges" value="">
 
-<<<<<<< HEAD
                 <label for="starts_at">Startdatum en tijd</label>
                 <input type="datetime-local" name="starts_at" id="starts_at" required value="{{ $defaultStart->format('Y-m-d\\TH:i') }}">
 
                 <label for="ends_at">Einddatum en tijd</label>
                 <input type="datetime-local" name="ends_at" id="ends_at" required value="{{ $defaultEnd->format('Y-m-d\\TH:i') }}">
-=======
-                <label for="starts_at">Start</label>
-                <input type="datetime-local" name="starts_at" id="starts_at" required>
-
-                <label for="ends_at">Einde</label>
-                <input type="datetime-local" name="ends_at" id="ends_at" required>
->>>>>>> parent of 1568204 (errors fixed)
 
                 <label for="slot_length_minutes">Slotlengte (minuten)</label>
                 <select name="slot_length_minutes" id="slot_length_minutes" required>
@@ -42,7 +34,6 @@
         </div>
 
         <div class="card">
-<<<<<<< HEAD
             <h2>⚙️ Instellingen</h2>
             <div class="muted">Beheer globale instellingen en brontypes in het aparte instellingenmenu.</div>
             <a class="button" style="margin-top: 20px; display: inline-block;" href="{{ route('admin.settings') }}">→ Naar instellingen</a>
@@ -68,7 +59,7 @@
                 @foreach ($weekDays as $day)
                     <div style="background: rgba(5, 15, 31, 0.02); font-weight: 600; color: var(--ink); padding: 12px 8px; border-right: 1px solid var(--border-light); text-align: center; font-size: 0.85rem;">{{ $day->locale('nl')->isoFormat('ddd D/M') }}</div>
                 @endforeach
-                
+
                 @foreach ($calendarHours as $hour)
                     <div style="background: rgba(5, 15, 31, 0.02); font-weight: 600; color: var(--ink); padding: 10px 8px; border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); font-size: 0.85rem; text-align: center;">{{ str_pad((string) $hour, 2, '0', STR_PAD_LEFT) }}:00</div>
                     @foreach ($weekDays as $day)
@@ -294,107 +285,6 @@
         @if($recentBookings->count() > 0)
             <table style="margin-top: 12px;">
                 <thead>
-=======
-            <h2>Resource instellingen</h2>
-            <form method="post" action="{{ route('admin.resource.update') }}">
-                @csrf
-                @method('PUT')
-                <label for="name">Naam</label>
-                <input type="text" name="name" id="name" value="{{ $resource->name }}" required>
-
-                <label for="timezone">Tijdzone</label>
-                <input type="text" name="timezone" id="timezone" value="{{ $resource->timezone }}" required>
-
-                <label for="default_slot_length_minutes">Standaard slotlengte</label>
-                <select name="default_slot_length_minutes" id="default_slot_length_minutes" required>
-                    @foreach (config('booking.allowed_slot_lengths') as $length)
-                        <option value="{{ $length }}" @selected($length === $resource->default_slot_length_minutes)>{{ $length }}</option>
-                    @endforeach
-                </select>
-
-                <label for="default_capacity">Standaard capaciteit</label>
-                <input type="number" min="1" max="50" name="default_capacity" id="default_capacity" value="{{ $resource->default_capacity }}" required>
-
-                <label for="is_active">Actief</label>
-                <select name="is_active" id="is_active" required>
-                    <option value="1" @selected($resource->is_active)>Ja</option>
-                    <option value="0" @selected(! $resource->is_active)>Nee</option>
-                </select>
-
-                <button type="submit" style="margin-top:12px;">Opslaan</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="card" style="margin-top:16px;">
-        <h2>Weekoverzicht ({{ $weekStart->format('d-m-Y') }})</h2>
-        @foreach ($slotsByDate as $date => $slots)
-            <h3>{{ Carbon::parse($date)->format('d-m-Y') }}</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Start</th>
-                        <th>Einde</th>
-                        <th>Capaciteit</th>
-                        <th>Geboekt</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($slots as $slot)
-                        <tr>
-                            <td>{{ $slot->starts_at->setTimezone($resource->timezone)->format('H:i') }}</td>
-                            <td>{{ $slot->ends_at->setTimezone($resource->timezone)->format('H:i') }}</td>
-                            <td>{{ $slot->capacity }}</td>
-                            <td>{{ $slot->booked_count }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endforeach
-    </div>
-
-    <div class="card" style="margin-top:16px;">
-        <h2>Beschikbaarheidsblokken</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Start</th>
-                    <th>Einde</th>
-                    <th>Slots</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($blocks as $block)
-                    <tr>
-                        <td>{{ $block->starts_at->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
-                        <td>{{ $block->ends_at->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
-                        <td>{{ $block->slot_length_minutes }} min / cap {{ $block->capacity }}</td>
-                        <td>
-                            <form method="post" action="{{ route('admin.availability.destroy', $block) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit">Verwijderen</button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    <div class="card" style="margin-top:16px;">
-        <h2>Recente boekingen</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Moment</th>
-                    <th>Slot</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($recentBookings as $booking)
->>>>>>> parent of 1568204 (errors fixed)
                     <tr>
                         <th>Geboekt op</th>
                         <th>Slottijd</th>

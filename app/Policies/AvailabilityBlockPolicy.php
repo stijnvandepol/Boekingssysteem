@@ -12,6 +12,11 @@ class AvailabilityBlockPolicy
         return $user->role === 'admin' && $block->resource->user_id === $user->id;
     }
 
+    public function update(User $user, AvailabilityBlock $block): bool
+    {
+        return $this->view($user, $block);
+    }
+
     public function delete(User $user, AvailabilityBlock $block): bool
     {
         return $this->view($user, $block);

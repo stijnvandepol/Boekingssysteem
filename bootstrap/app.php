@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
             'turnstile' => \App\Http\Middleware\TurnstileMiddleware::class,
+            'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

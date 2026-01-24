@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Resource;
+use App\Models\SlotInstance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
@@ -33,5 +36,46 @@ class BookingController extends Controller
             'resource' => $resource,
             'bookings' => $bookings,
         ]);
+    }
+
+    public function cancel(Request $request, Booking $booking)
+    {
+        $resource = Resource::where('user_id', $request->user()->id)->firstOrFail();
+        if ((int) $booking->resource_id !== (int) $resource->id) {
+            abort(403);
+        }
+
+        DB::transaction(function () use ($booking, $resource) {
+            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            if ($lockedBooking->status !== 'confirmed') {
+                return;
+            }
+
+            $lockedBooking->update(['status' => 'cancelled']);
+
+            if ($lockedBooking->slot_instance_id) {
+                $lockedSlot = SlotInstance::whereKey($lockedBooking->slot_instance_id)->lockForUpdate()->first();
+                if ($lockedSlot) {
+                    $newCount = max(0, $lockedSlot->booked_count - 1);
+                    $lockedSlot->update([
+                        'booked_count' => $newCount,
+                        'status' => $newCount < $lockedSlot->capacity ? 'open' : $lockedSlot->status,
+                    ]);
+                }
+            }
+
+            AuditLog::create([
+                'user_id' => $resource->user_id,
+                'action' => 'booking.cancelled',
+                'auditable_type' => Booking::class,
+                'auditable_id' => $lockedBooking->id,
+                'metadata' => [
+                    'slot_instance_id' => $lockedBooking->slot_instance_id,
+                ],
+                'created_at' => now(),
+            ]);
+        });
+
+        return redirect()->route('admin.bookings.index')->with('status', 'Boeking geannuleerd.');
     }
 }

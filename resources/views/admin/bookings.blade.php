@@ -23,7 +23,6 @@
             </div>
         </form>
 
-<<<<<<< HEAD
         <div style="overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-light);">
             <table style="margin: 0;">
                 <thead>
@@ -86,32 +85,6 @@
                 </tbody>
             </table>
         </div>
-=======
-        <table>
-            <thead>
-                <tr>
-                    <th>Boekingsdatum</th>
-                    <th>Slot</th>
-                    <th>Gast</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($bookings as $booking)
-                    <tr>
-                        <td>{{ $booking->booked_at->format('d-m-Y H:i') }}</td>
-                        <td>{{ $booking->slotInstance?->starts_at?->setTimezone($resource->timezone)->format('d-m H:i') }}</td>
-                        <td>{{ $booking->guests->first()?->name }} ({{ $booking->guests->first()?->email }})</td>
-                        <td>{{ $booking->status }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="muted">Geen boekingen gevonden.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
->>>>>>> parent of 1568204 (errors fixed)
 
         @if ($bookings->hasPages())
             <div style="margin-top: 20px;">

@@ -16,7 +16,8 @@ class DashboardController extends Controller
     {
         $resource = Resource::where('user_id', $request->user()->id)->firstOrFail();
 
-        $weekStart = Carbon::now($resource->timezone)->startOfWeek();
+        $weekOffset = (int) $request->query('week', 0);
+        $weekStart = Carbon::now($resource->timezone)->startOfWeek(Carbon::MONDAY)->addWeeks($weekOffset);
         $weekEnd = $weekStart->copy()->addDays(7)->endOfDay();
 
         $blocks = AvailabilityBlock::where('resource_id', $resource->id)
@@ -30,7 +31,6 @@ class DashboardController extends Controller
             ->get()
             ->groupBy(fn ($slot) => $slot->starts_at->setTimezone($resource->timezone)->toDateString());
 
-<<<<<<< HEAD
         $blocksByDate = $blocks->groupBy(fn ($block) => $block->starts_at->setTimezone($resource->timezone)->toDateString());
 
         $weekDays = collect(range(0, 6))
@@ -50,8 +50,6 @@ class DashboardController extends Controller
         $defaultStart = $now->copy()->second(0);
         $defaultEnd = $defaultStart->copy()->addHour();
 
-=======
->>>>>>> parent of 1568204 (errors fixed)
         $recentBookings = Booking::with('slotInstance')
             ->where('resource_id', $resource->id)
             ->orderByDesc('booked_at')
@@ -61,17 +59,16 @@ class DashboardController extends Controller
         return view('admin.dashboard', [
             'resource' => $resource,
             'weekStart' => $weekStart,
+            'weekOffset' => $weekOffset,
             'blocks' => $blocks,
+            'blocksByDate' => $blocksByDate,
             'slotsByDate' => $slots,
-<<<<<<< HEAD
             'weekDays' => $weekDays,
             'calendarHours' => $calendarHours,
             'calendarStartHour' => $calendarStartHour,
             'calendarEndHour' => $calendarEndHour,
             'defaultStart' => $defaultStart,
             'defaultEnd' => $defaultEnd,
-=======
->>>>>>> parent of 1568204 (errors fixed)
             'recentBookings' => $recentBookings,
         ]);
     }

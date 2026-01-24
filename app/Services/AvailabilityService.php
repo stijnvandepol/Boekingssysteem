@@ -175,8 +175,6 @@ class AvailabilityService
             ]);
         });
     }
-<<<<<<< HEAD
-
     public function updateBlock(AvailabilityBlock $block, array $data, User $user): AvailabilityBlock
     {
         return DB::transaction(function () use ($block, $data, $user) {
@@ -270,6 +268,4 @@ class AvailabilityService
             return $locked;
         });
     }
-=======
->>>>>>> parent of 1568204 (errors fixed)
 }

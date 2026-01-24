@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-﻿# Boekingssysteem
-=======
-# Rens Boekingssysteem
->>>>>>> parent of 1568204 (errors fixed)
+﻿﻿# Boekingssysteem
+# Boekingssysteem
 
 Productieklare Laravel booking app die volledig in Docker draait.
 
@@ -39,3 +36,4 @@ App draait op `http://localhost:8080`.
 ## Healthcheck
 
 - `GET /health` retourneert `{ "status": "ok" }`.
+
