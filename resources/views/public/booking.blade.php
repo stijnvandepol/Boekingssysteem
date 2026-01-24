@@ -94,8 +94,8 @@
                     <label for="phone">Telefoonnummer *</label>
                     <input type="text" name="phone" id="phone" required value="{{ old('phone') }}" placeholder="+31 (0)6 ...">
 
-                    <label for="email">E-mailadres</label>
-                    <input type="email" name="email" id="email" value="{{ old('email') }}" placeholder="jouw@email.nl">
+                    <label for="email">E-mailadres *</label>
+                    <input type="email" name="email" id="email" required value="{{ old('email') }}" placeholder="jouw@email.nl">
 
                     @if (config('services.turnstile.enabled'))
                         <label for="turnstile_token">Beveiligingsverificatie</label>
