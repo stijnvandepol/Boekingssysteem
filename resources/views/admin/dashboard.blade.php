@@ -3,6 +3,45 @@
 
 @section('content')
     @include('partials.alerts')
+    <style>
+        .availability-mobile {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .availability-mobile .field-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr;
+        }
+
+        .availability-mobile .field-row {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .availability-mobile .hint {
+            margin-top: -8px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .availability-mobile {
+                display: block;
+            }
+
+            .availability-desktop {
+                display: none;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .availability-mobile .field-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 
     <div class="card" id="availability-form">
         <h2>📅 Beschikbaarheid</h2>
@@ -15,10 +54,46 @@
             <input type="hidden" name="slot_length_minutes" id="slot_length_minutes" value="{{ $resource->default_slot_length_minutes }}">
             <input type="hidden" name="capacity" id="capacity" value="{{ $resource->default_capacity }}">
             <button type="submit" style="display: none;">Submit</button>
+
+            <div class="availability-mobile">
+                <div class="muted hint">Mobiel: vul handmatig beschikbaarheid in.</div>
+                <div class="field-grid">
+                    <div>
+                        <label for="mobile-availability-date">Datum</label>
+                        <input type="date" id="mobile-availability-date" value="{{ $defaultStart->format('Y-m-d') }}">
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <label for="mobile-availability-start">Starttijd</label>
+                            <input type="time" id="mobile-availability-start" value="{{ $defaultStart->format('H:i') }}" step="900">
+                        </div>
+                        <div>
+                            <label for="mobile-availability-end">Eindtijd</label>
+                            <input type="time" id="mobile-availability-end" value="{{ $defaultEnd->format('H:i') }}" step="900">
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <label for="mobile-slot-length">Slotlengte</label>
+                            <select id="mobile-slot-length">
+                                @foreach (config('booking.allowed_slot_lengths') as $length)
+                                    <option value="{{ $length }}" @selected($length === $resource->default_slot_length_minutes)>{{ $length }} min</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="mobile-capacity">Capaciteit</label>
+                            <input type="number" id="mobile-capacity" value="{{ $resource->default_capacity }}" min="1" max="50">
+                        </div>
+                    </div>
+                    <button type="button" id="mobile-availability-submit">Beschikbaarheid toevoegen</button>
+                </div>
+            </div>
         </form>
     </div>
 
     <div class="card" style="margin-top: 24px;">
+        <div class="availability-desktop">
         <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
             <div>
                 <h2 style="margin-bottom: 8px;">📋 Weekrooster ({{ $weekStart->format('d-m-Y') }})</h2>
@@ -77,6 +152,7 @@
             <button type="button" id="apply-selection" style="flex: 1; min-width: 120px; padding: 10px 14px;">Voeg toe</button>
             <button type="button" id="clear-selection" class="button" style="flex: 1; min-width: 100px; padding: 10px 14px;">Wissen</button>
         </div>
+        </div>
 
         <div style="margin-top: 24px;">
             <h2>📊 Beschikbaarheidsblokken</h2>
@@ -129,6 +205,8 @@
         const rangesInput = document.getElementById('ranges');
         const startInput = document.getElementById('starts_at');
         const endInput = document.getElementById('ends_at');
+        const slotLengthInput = document.getElementById('slot_length_minutes');
+        const capacityInput = document.getElementById('capacity');
         const form = document.querySelector('#availability-form form');
 
         const updateSummary = () => {
@@ -258,7 +336,46 @@
                 }
             });
         });
+
+        const mobileSubmit = document.getElementById('mobile-availability-submit');
+        const mobileDate = document.getElementById('mobile-availability-date');
+        const mobileStart = document.getElementById('mobile-availability-start');
+        const mobileEnd = document.getElementById('mobile-availability-end');
+        const mobileSlotLength = document.getElementById('mobile-slot-length');
+        const mobileCapacity = document.getElementById('mobile-capacity');
+
+        if (mobileSubmit) {
+            mobileSubmit.addEventListener('click', () => {
+                if (!mobileDate || !mobileStart || !mobileEnd || !startInput || !endInput || !form) {
+                    return;
+                }
+                const date = mobileDate.value;
+                const startTime = mobileStart.value;
+                const endTime = mobileEnd.value;
+                if (!date || !startTime || !endTime) {
+                    alert('Vul datum, starttijd en eindtijd in.');
+                    return;
+                }
+                const startIso = `${date}T${startTime}`;
+                const endIso = `${date}T${endTime}`;
+                if (endIso <= startIso) {
+                    alert('De eindtijd moet na de starttijd liggen.');
+                    return;
+                }
+                startInput.value = startIso;
+                endInput.value = endIso;
+                if (slotLengthInput && mobileSlotLength) {
+                    slotLengthInput.value = mobileSlotLength.value;
+                }
+                if (capacityInput && mobileCapacity) {
+                    capacityInput.value = mobileCapacity.value;
+                }
+                if (rangesInput) {
+                    rangesInput.value = '';
+                }
+                form.submit();
+            });
+        }
     </script>
 
 @endsection
-
