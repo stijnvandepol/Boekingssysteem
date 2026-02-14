@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: barber-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: barber_booking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d barber_booking"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    container_name: barber-migrate
+    restart: "no"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+      target: runner
+    container_name: barber-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    networks:
+      - internal
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: barber-adminer
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+    ports:
+      - "8080:8080"
+    profiles:
+      - tools
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data:

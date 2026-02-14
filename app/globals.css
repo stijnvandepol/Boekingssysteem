@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 32 38% 6%;
+  --foreground: 42 33% 92%;
+  --card: 28 35% 10%;
+  --card-foreground: 40 24% 92%;
+  --popover: 28 35% 10%;
+  --popover-foreground: 40 24% 92%;
+  --primary: 42 58% 54%;
+  --primary-foreground: 26 28% 12%;
+  --secondary: 28 24% 18%;
+  --secondary-foreground: 42 20% 90%;
+  --muted: 28 20% 16%;
+  --muted-foreground: 42 14% 70%;
+  --accent: 35 52% 26%;
+  --accent-foreground: 43 35% 92%;
+  --destructive: 0 68% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 35 26% 24%;
+  --input: 33 22% 20%;
+  --ring: 42 60% 50%;
+  --radius: 0.75rem;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(181, 142, 64, 0.22), transparent 34%),
+    radial-gradient(circle at 88% 90%, rgba(122, 85, 32, 0.22), transparent 28%),
+    linear-gradient(160deg, #100d09 0%, #17110b 35%, #090705 100%);
+  min-height: 100vh;
+}
+
+.luxury-heading {
+  font-family: var(--font-heading), serif;
+  letter-spacing: 0.01em;
+}
+
+.ornament {
+  position: relative;
+}
+
+.ornament::after {
+  content: "";
+  display: block;
+  margin-top: 0.7rem;
+  width: 70px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #d4af37 45%, transparent 100%);
+}
