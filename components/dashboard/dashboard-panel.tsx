@@ -43,7 +43,7 @@ type ParsedAvailabilityBlock = AvailabilityBlock & {
 const AGENDA_WEEK_STARTS_ON = 1 as const;
 const AGENDA_START_HOUR = 7;
 const AGENDA_END_HOUR = 22;
-const DEFAULT_AGENDA_SLOT_MINUTES = 30;
+const DEFAULT_AGENDA_SLOT_MINUTES = 60;
 
 function getDayKey(date: Date) {
   return format(date, "yyyy-MM-dd");
@@ -125,7 +125,7 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [startDateTime, setStartDateTime] = useState("");
   const [endDateTime, setEndDateTime] = useState("");
-  const [slotDurationMinute, setSlotDurationMinute] = useState(30);
+  const [slotDurationMinute, setSlotDurationMinute] = useState(DEFAULT_AGENDA_SLOT_MINUTES);
   const [capacity, setCapacity] = useState(1);
   const [isBlocked, setIsBlocked] = useState(false);
   const [note, setNote] = useState("");
@@ -134,6 +134,8 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
   const [mobileDayKey, setMobileDayKey] = useState(() => getDayKey(new Date()));
   const [agendaSlotMinutes, setAgendaSlotMinutes] = useState<number>(DEFAULT_AGENDA_SLOT_MINUTES);
   const [selectedSlotKeys, setSelectedSlotKeys] = useState<string[]>([]);
+  const [mobileRangeMode, setMobileRangeMode] = useState(false);
+  const [mobileRangeStartKey, setMobileRangeStartKey] = useState<string | null>(null);
 
   const groupedBlocks = useMemo(() => {
     const map = new Map<string, AvailabilityBlock[]>();
@@ -251,6 +253,17 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
   }, [weekDays, mobileDayKey]);
 
   useEffect(() => {
+    if (!mobileRangeStartKey) {
+      return;
+    }
+
+    const rangeStart = new Date(mobileRangeStartKey);
+    if (Number.isNaN(rangeStart.getTime()) || getDayKey(rangeStart) !== mobileDayKey) {
+      setMobileRangeStartKey(null);
+    }
+  }, [mobileDayKey, mobileRangeStartKey]);
+
+  useEffect(() => {
     if (editingId || selectedSlotKeys.length === 0) {
       return;
     }
@@ -265,11 +278,13 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
     setEditingId(null);
     setStartDateTime("");
     setEndDateTime("");
-    setSlotDurationMinute(30);
+    setSlotDurationMinute(DEFAULT_AGENDA_SLOT_MINUTES);
     setCapacity(1);
     setIsBlocked(false);
     setNote("");
     setSelectedSlotKeys([]);
+    setMobileRangeMode(false);
+    setMobileRangeStartKey(null);
   }
 
   async function upsertBlockFromInputs() {
@@ -332,6 +347,8 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
     setWeekStart(startOfWeek(blockStart, { weekStartsOn: AGENDA_WEEK_STARTS_ON }));
     setMobileDayKey(getDayKey(blockStart));
     setSelectedSlotKeys([]);
+    setMobileRangeMode(false);
+    setMobileRangeStartKey(null);
   }
 
   async function deleteBlock(id: string) {
@@ -406,6 +423,48 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
     });
   }
 
+  function handleMobileSlotClick(slotStart: Date) {
+    const existingBlock = findBlockForSlot(slotStart);
+    if (existingBlock) {
+      startEditing(existingBlock);
+      setMobileRangeStartKey(null);
+      return;
+    }
+
+    const key = slotStart.toISOString();
+    if (!mobileRangeMode) {
+      handleAgendaSlotClick(slotStart);
+      return;
+    }
+
+    if (!mobileRangeStartKey) {
+      setEditingId(null);
+      setMobileRangeStartKey(key);
+      setSelectedSlotKeys((current) => (current.includes(key) ? current : [...current, key].sort()));
+      return;
+    }
+
+    const rangeStart = new Date(mobileRangeStartKey);
+    if (Number.isNaN(rangeStart.getTime()) || getDayKey(rangeStart) !== getDayKey(slotStart)) {
+      setMobileRangeStartKey(key);
+      setSelectedSlotKeys((current) => (current.includes(key) ? current : [...current, key].sort()));
+      return;
+    }
+
+    const slotMs = agendaSlotMinutes * 60_000;
+    const from = Math.min(rangeStart.getTime(), slotStart.getTime());
+    const to = Math.max(rangeStart.getTime(), slotStart.getTime());
+    const rangeKeys: string[] = [];
+
+    for (let timestamp = from; timestamp <= to; timestamp += slotMs) {
+      rangeKeys.push(new Date(timestamp).toISOString());
+    }
+
+    setEditingId(null);
+    setSelectedSlotKeys((current) => Array.from(new Set([...current, ...rangeKeys])).sort());
+    setMobileRangeStartKey(null);
+  }
+
   async function createBlocksFromSelection() {
     if (selectedSlotKeys.length === 0) {
       setError("Selecteer minimaal één tijdslot in de agenda.");
@@ -449,6 +508,7 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
       setSelectedSlotKeys([]);
       setStartDateTime("");
       setEndDateTime("");
+      setMobileRangeStartKey(null);
       await loadData();
     } catch (requestError) {
       setError(requestError instanceof Error ? translateDashboardError(requestError.message) : "Geselecteerde blokken aanmaken is mislukt.");
@@ -458,9 +518,9 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${selectedSlotCount > 0 || editingId ? "pb-60 lg:pb-6" : ""}`}>
       <div className="flex items-center justify-end">
-        <Button variant="outline" onClick={() => signOut({ callbackUrl: "/" })}>
+        <Button variant="outline" className="w-full sm:w-auto" onClick={() => signOut({ callbackUrl: "/" })}>
           Uitloggen
         </Button>
       </div>
@@ -470,16 +530,16 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
       <div>
         <Card>
           <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <CardTitle className="luxury-heading text-2xl">Visuele Agenda</CardTitle>
+                <CardTitle className="luxury-heading text-xl sm:text-2xl">Visuele Agenda</CardTitle>
                 <CardDescription>Selecteer zoveel tijdvakken als je wilt en maak daarna in bulk beschikbaarheid aan.</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setWeekStart((current) => addDays(current, -7))}>
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
+                <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setWeekStart((current) => addDays(current, -7))}>
                   Vorige Week
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setWeekStart((current) => addDays(current, 7))}>
+                <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setWeekStart((current) => addDays(current, 7))}>
                   Volgende Week
                 </Button>
               </div>
@@ -498,20 +558,21 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
                 Geselecteerd Slot
               </span>
             </div>
-            <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-wrap items-start gap-2 sm:items-end">
               <div className="space-y-1">
                 <Label htmlFor="agenda-step" className="text-xs text-muted-foreground">
                   Agenda-stap
                 </Label>
                 <select
                   id="agenda-step"
-                  className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
+                  className="h-9 min-w-[120px] rounded-md border border-input bg-background px-2.5 text-sm"
                   value={agendaSlotMinutes}
                   onChange={(event) => {
                     const value = Number(event.target.value);
                     setAgendaSlotMinutes(value);
                     setSlotDurationMinute(value);
                     setSelectedSlotKeys([]);
+                    setMobileRangeStartKey(null);
                   }}
                 >
                   <option value={30}>30 min</option>
@@ -531,7 +592,7 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
             {!loading ? (
               <>
                 <div className="space-y-4 lg:hidden">
-                  <div className="flex gap-2 overflow-x-auto pb-1">
+                  <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1">
                     {weekDays.map((day) => {
                       const dayKey = getDayKey(day);
                       const isActive = mobileDayKey === dayKey;
@@ -541,7 +602,7 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
                           key={dayKey}
                           type="button"
                           onClick={() => setMobileDayKey(dayKey)}
-                          className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition ${
+                          className={`snap-start whitespace-nowrap rounded-full border px-3 py-2 text-sm transition ${
                             isActive
                               ? "border-primary bg-primary/15 text-primary"
                               : "border-border bg-background/50 text-muted-foreground hover:border-primary/60"
@@ -552,11 +613,43 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
                       );
                     })}
                   </div>
-                  <div className="space-y-1">
+                  <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={mobileRangeMode ? "default" : "outline"}
+                        onClick={() => {
+                          setMobileRangeMode((current) => {
+                            if (current) {
+                              setMobileRangeStartKey(null);
+                            }
+                            return !current;
+                          });
+                        }}
+                      >
+                        {mobileRangeMode ? "Bereikselectie actief" : "Bereik selecteren"}
+                      </Button>
+                      {mobileRangeMode ? (
+                        <Button type="button" size="sm" variant="ghost" onClick={() => setMobileRangeStartKey(null)}>
+                          Startpunt reset
+                        </Button>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {mobileRangeMode
+                        ? mobileRangeStartKey
+                          ? `Start gekozen om ${format(new Date(mobileRangeStartKey), "HH:mm")}. Tik nu de eindtijd om het hele blok te selecteren.`
+                          : "Tik een starttijd en daarna een eindtijd om in één keer meerdere uren te selecteren."
+                        : "Tip: zet bereikselectie aan om een volledig blok in twee tikken te selecteren."}
+                    </p>
+                  </div>
+                  <div className="max-h-[46vh] space-y-1 overflow-y-auto pr-1">
                     {agendaMinutes.map((minute) => {
                       const slotStart = dateAtMinute(mobileDayDate, minute);
                       const existingBlock = findBlockForSlot(slotStart);
                       const isSelected = isSlotSelected(slotStart);
+                      const isRangeStart = mobileRangeStartKey === slotStart.toISOString();
                       const statusLabel = existingBlock
                         ? existingBlock.isBlocked
                           ? "Geblokkeerd"
@@ -567,14 +660,14 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
                         <button
                           key={`${getDayKey(mobileDayDate)}-${minute}`}
                           type="button"
-                          onClick={() => handleAgendaSlotClick(slotStart)}
-                          className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition ${
+                          onClick={() => handleMobileSlotClick(slotStart)}
+                          className={`flex min-h-12 w-full items-center justify-between rounded-md border px-3 py-2.5 text-left text-sm transition ${
                             existingBlock
                               ? existingBlock.isBlocked
                                 ? "border-destructive/40 bg-destructive/15"
                                 : "border-primary/40 bg-primary/15"
                               : "border-border/60 bg-background/40 hover:border-primary/50 hover:bg-primary/10"
-                          } ${isSelected ? "ring-1 ring-primary/80" : ""}`}
+                          } ${isSelected ? "ring-1 ring-primary/80" : ""} ${isRangeStart ? "ring-2 ring-inset ring-primary" : ""}`}
                           title={
                             existingBlock
                               ? `${format(existingBlock.start, "HH:mm")} - ${format(existingBlock.end, "HH:mm")}`
@@ -648,8 +741,8 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
       </div>
 
       {selectedSlotCount > 0 || editingId ? (
-        <div className="fixed inset-x-3 bottom-3 z-40 lg:inset-x-auto lg:right-6 lg:w-[420px]">
-          <div className="rounded-xl border border-border/80 bg-card/95 p-4 shadow-2xl backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] lg:inset-x-auto lg:bottom-6 lg:right-6 lg:w-[420px] lg:px-0 lg:pb-0">
+          <div className="max-h-[78vh] overflow-y-auto rounded-t-2xl border border-border/80 bg-card/95 p-4 shadow-2xl backdrop-blur lg:max-h-none lg:rounded-xl">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-foreground">{editingId ? "Blok bewerken" : "Nieuwe beschikbaarheid"}</p>
@@ -671,7 +764,7 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
             </div>
 
             {editingId ? (
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="quick-start">Start</Label>
                   <Input id="quick-start" type="datetime-local" value={startDateTime} onChange={(event) => setStartDateTime(event.target.value)} required />
@@ -683,7 +776,7 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
               </div>
             ) : null}
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="quick-duration">Slotduur</Label>
                 <select
@@ -713,7 +806,7 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex items-start gap-2">
               <input
                 id="quick-blocked"
                 type="checkbox"
@@ -729,17 +822,17 @@ export function DashboardPanel({ initialCsrfToken }: Props) {
               <Textarea id="quick-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={300} rows={2} />
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               {editingId ? (
-                <Button type="button" onClick={() => void upsertBlockFromInputs()} disabled={savingBlock}>
+                <Button type="button" className="w-full sm:w-auto" onClick={() => void upsertBlockFromInputs()} disabled={savingBlock}>
                   {savingBlock ? "Bijwerken..." : "Blok bijwerken"}
                 </Button>
               ) : (
-                <Button type="button" onClick={() => void createBlocksFromSelection()} disabled={savingBlock}>
+                <Button type="button" className="w-full sm:w-auto" onClick={() => void createBlocksFromSelection()} disabled={savingBlock}>
                   {savingBlock ? "Opslaan..." : "Opslaan"}
                 </Button>
               )}
-              <Button type="button" variant="outline" onClick={resetForm} disabled={savingBlock}>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={resetForm} disabled={savingBlock}>
                 {editingId ? "Annuleren" : "Selectie wissen"}
               </Button>
             </div>
