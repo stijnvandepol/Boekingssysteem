@@ -14,8 +14,8 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Atelier Barber | Booking",
-  description: "Luxury barber booking system with real-time capacity control"
+  title: "Atelier Barber | Boekingen",
+  description: "Luxe barbiersboekingssysteem met realtime capaciteitscontrole"
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="nl">
       <body className={`${manrope.variable} ${cormorant.variable} font-sans`}>{children}</body>
     </html>
   );

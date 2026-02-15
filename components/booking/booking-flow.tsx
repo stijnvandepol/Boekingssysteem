@@ -1,6 +1,7 @@
 "use client";
 
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, addMinutes, format, parseISO } from "date-fns";
+import { nl } from "date-fns/locale";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,12 +20,31 @@ type SlotItem = {
 type BookingResponse = {
   bookingId: string;
   slotDateTime: string;
-  cancellationToken: string;
+  durationMinute: number;
 };
 
 type Props = {
   initialCsrfToken: string;
 };
+
+function translateBookingError(message: string) {
+  const translations: Record<string, string> = {
+    "No active availability for this slot.": "Er is geen actieve beschikbaarheid voor dit tijdslot.",
+    "Invalid slot for selected availability block.": "Dit tijdslot is ongeldig voor het geselecteerde blok.",
+    "This slot is already fully booked.": "Dit tijdslot is al volledig volgeboekt.",
+    "Missing CSRF token.": "CSRF-token ontbreekt.",
+    "Invalid CSRF token.": "CSRF-token is ongeldig.",
+    Unauthorized: "Je bent niet gemachtigd om deze actie uit te voeren.",
+    "Booking failed.": "Boeking mislukt.",
+    "Boeking mislukt.": "Boeking mislukt."
+  };
+
+  return translations[message] ?? "Boeking mislukt. Probeer het opnieuw.";
+}
+
+function toCalendarUtc(date: Date) {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
 
 export function BookingFlow({ initialCsrfToken }: Props) {
   const [csrfToken, setCsrfToken] = useState(initialCsrfToken);
@@ -36,7 +56,6 @@ export function BookingFlow({ initialCsrfToken }: Props) {
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
-  const [serviceName, setServiceName] = useState("Classic Cut");
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +76,7 @@ export function BookingFlow({ initialCsrfToken }: Props) {
 
         const response = await fetch(url, { cache: "no-store" });
         if (!response.ok) {
-          throw new Error("Failed to load availability.");
+          throw new Error("Beschikbaarheid laden is mislukt.");
         }
 
         const payload = (await response.json()) as { slots: SlotItem[] };
@@ -68,7 +87,7 @@ export function BookingFlow({ initialCsrfToken }: Props) {
           setSelectedDate(firstDateKey);
         }
       } catch (requestError) {
-        setError(requestError instanceof Error ? requestError.message : "Failed to load schedule.");
+        setError(requestError instanceof Error ? translateBookingError(requestError.message) : "Planning laden is mislukt.");
       } finally {
         setLoadingSlots(false);
       }
@@ -104,7 +123,7 @@ export function BookingFlow({ initialCsrfToken }: Props) {
     setError(null);
 
     if (!selectedSlot) {
-      setError("Please select a time slot.");
+      setError("Selecteer eerst een tijdslot.");
       return;
     }
 
@@ -119,7 +138,6 @@ export function BookingFlow({ initialCsrfToken }: Props) {
         },
         body: JSON.stringify({
           slotDateTime: selectedSlot.slotDateTime,
-          serviceName,
           customerName,
           email,
           notes,
@@ -130,36 +148,85 @@ export function BookingFlow({ initialCsrfToken }: Props) {
       const payload = (await response.json()) as BookingResponse & { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Booking failed.");
+        throw new Error(payload.error ?? "Boeking mislukt.");
       }
 
       setSuccess(payload);
       setCustomerName("");
       setEmail("");
       setNotes("");
-      setServiceName("Classic Cut");
       setSelectedSlot(null);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Booking failed.");
+      setError(requestError instanceof Error ? translateBookingError(requestError.message) : "Boeking mislukt.");
     } finally {
       setSubmitting(false);
     }
   }
 
   if (success) {
+    const booking = success;
+    const eventStart = parseISO(booking.slotDateTime);
+    const eventEnd = addMinutes(eventStart, booking.durationMinute);
+    const eventTitle = "Afspraak bij Barber";
+    const eventDetails = "Online boeking via Barber.";
+
+    function downloadIcs() {
+      const ics = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Barber//Boeking//NL",
+        "BEGIN:VEVENT",
+        `UID:${booking.bookingId}@atelierbarber.local`,
+        `DTSTAMP:${toCalendarUtc(new Date())}`,
+        `DTSTART:${toCalendarUtc(eventStart)}`,
+        `DTEND:${toCalendarUtc(eventEnd)}`,
+        `SUMMARY:${eventTitle}`,
+        `DESCRIPTION:${eventDetails}`,
+        "END:VEVENT",
+        "END:VCALENDAR"
+      ].join("\r\n");
+
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "afspraak.ics";
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    }
+
+    function openGoogleCalendar() {
+      const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: eventTitle,
+        details: eventDetails,
+        dates: `${toCalendarUtc(eventStart)}/${toCalendarUtc(eventEnd)}`
+      });
+
+      window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener,noreferrer");
+    }
+
     return (
       <Card className="mx-auto max-w-2xl animate-fade-up">
         <CardHeader>
-          <CardTitle className="luxury-heading text-3xl">Appointment Confirmed</CardTitle>
+          <CardTitle className="luxury-heading text-3xl">Afspraak Bevestigd</CardTitle>
           <CardDescription>
-            {format(parseISO(success.slotDateTime), "EEEE, MMMM d 'at' HH:mm")} is now reserved.
+            {format(parseISO(booking.slotDateTime), "EEEE d MMMM 'om' HH:mm", { locale: nl })} staat nu voor je gereserveerd.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Save this cancellation token for support: <span className="font-mono text-foreground">{success.cancellationToken}</span>
-          </p>
-          <Button onClick={() => setSuccess(null)}>Book Another Slot</Button>
+          <p className="text-sm text-muted-foreground">Wil je deze afspraak toevoegen aan je agenda?</p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={downloadIcs}>
+              Download Agenda Bestand
+            </Button>
+            <Button type="button" variant="outline" onClick={openGoogleCalendar}>
+              Open In Google Agenda
+            </Button>
+          </div>
+          <Button onClick={() => setSuccess(null)}>Nog Een Afspraak Boeken</Button>
         </CardContent>
       </Card>
     );
@@ -169,12 +236,12 @@ export function BookingFlow({ initialCsrfToken }: Props) {
     <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
       <Card className="animate-fade-up">
         <CardHeader>
-          <CardTitle className="luxury-heading text-2xl">1. Select Date & Time</CardTitle>
-          <CardDescription>Only real-time available slots are shown.</CardDescription>
+          <CardTitle className="luxury-heading text-2xl">1. Kies Datum En Tijd</CardTitle>
+          <CardDescription>Alleen realtime beschikbare slots worden getoond.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {loadingSlots ? <p className="text-sm text-muted-foreground">Loading schedule...</p> : null}
-          {!loadingSlots && availableDates.length === 0 ? <p className="text-sm text-muted-foreground">No slots available yet.</p> : null}
+          {loadingSlots ? <p className="text-sm text-muted-foreground">Planning laden...</p> : null}
+          {!loadingSlots && availableDates.length === 0 ? <p className="text-sm text-muted-foreground">Nog geen slots beschikbaar.</p> : null}
           {availableDates.length > 0 ? (
             <div className="space-y-5">
               <div className="flex flex-wrap gap-2">
@@ -192,7 +259,7 @@ export function BookingFlow({ initialCsrfToken }: Props) {
                     }}
                     type="button"
                   >
-                    {format(new Date(`${dateKey}T00:00:00`), "EEE d MMM")}
+                    {format(new Date(`${dateKey}T00:00:00`), "EEE d MMM", { locale: nl })}
                   </button>
                 ))}
               </div>
@@ -209,7 +276,7 @@ export function BookingFlow({ initialCsrfToken }: Props) {
                     type="button"
                   >
                     <p className="font-medium">{format(parseISO(slot.slotDateTime), "HH:mm")}</p>
-                    <p className="text-xs text-muted-foreground">{slot.remainingCapacity} seats left</p>
+                    <p className="text-xs text-muted-foreground">{slot.remainingCapacity} plekken vrij</p>
                   </button>
                 ))}
               </div>
@@ -220,35 +287,22 @@ export function BookingFlow({ initialCsrfToken }: Props) {
 
       <Card className="animate-fade-up [animation-delay:120ms]">
         <CardHeader>
-          <CardTitle className="luxury-heading text-2xl">2. Your Details</CardTitle>
-          <CardDescription>Secure checkout with server-side validation.</CardDescription>
+          <CardTitle className="luxury-heading text-2xl">2. Jouw Gegevens</CardTitle>
+          <CardDescription>Veilig reserveren met server-side validatie.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="rounded-md border border-border/70 bg-background/60 p-3 text-sm">
-              <p className="text-muted-foreground">Selected slot</p>
+              <p className="text-muted-foreground">Geselecteerde tijd</p>
               <p className="font-medium text-foreground">
                 {selectedSlot
-                  ? format(parseISO(selectedSlot.slotDateTime), "EEEE, MMM d 'at' HH:mm")
-                  : "Pick a slot on the left"}
+                  ? format(parseISO(selectedSlot.slotDateTime), "EEEE d MMM 'om' HH:mm", { locale: nl })
+                  : "Kies links een tijdslot"}
               </p>
-              {selectedSlot ? <Badge className="mt-2 w-fit">{selectedSlot.remainingCapacity} remaining</Badge> : null}
+              {selectedSlot ? <Badge className="mt-2 w-fit">{selectedSlot.remainingCapacity} vrij</Badge> : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="serviceName">Service</Label>
-              <select
-                id="serviceName"
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={serviceName}
-                onChange={(event) => setServiceName(event.target.value)}
-              >
-                <option value="Classic Cut">Classic Cut</option>
-                <option value="Fade + Beard">Fade + Beard</option>
-                <option value="Beard Trim">Beard Trim</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="customerName">Full Name</Label>
+              <Label htmlFor="customerName">Naam</Label>
               <Input
                 id="customerName"
                 value={customerName}
@@ -258,16 +312,16 @@ export function BookingFlow({ initialCsrfToken }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mailadres</Label>
               <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
+              <Label htmlFor="notes">Opmerking (optioneel)</Label>
               <Textarea id="notes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={500} />
             </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={submitting || !selectedSlot || !csrfToken}>
-              {submitting ? "Confirming..." : "Confirm Booking"}
+              {submitting ? "Bevestigen..." : "Boeking Bevestigen"}
             </Button>
           </form>
         </CardContent>

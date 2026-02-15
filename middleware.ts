@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getCsrfCookieName } from "@/server/security/csrf";
 
 const securityHeaders: Record<string, string> = {
   "X-Frame-Options": "DENY",
@@ -29,17 +28,6 @@ export function middleware(request: NextRequest) {
 
   if (process.env.NODE_ENV === "production") {
     response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-  }
-
-  if (!request.cookies.get(getCsrfCookieName())) {
-    response.cookies.set({
-      name: getCsrfCookieName(),
-      value: crypto.randomUUID(),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/"
-    });
   }
 
   return response;

@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       {
         bookingId: booking.id,
         slotDateTime: booking.slotDateTime.toISOString(),
-        cancellationToken: booking.cancellationToken
+        durationMinute: booking.durationMinute
       },
       { status: 201 }
     );

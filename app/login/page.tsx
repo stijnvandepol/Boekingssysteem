@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
@@ -33,7 +33,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!result || result.error) {
-      setError("Invalid credentials.");
+      setError("Onjuiste inloggegevens.");
       return;
     }
 
@@ -45,17 +45,17 @@ export default function LoginPage() {
     <main className="container flex min-h-screen items-center justify-center py-12">
       <Card className="w-full max-w-md animate-fade-up">
         <CardHeader>
-          <CardTitle className="luxury-heading text-3xl">Barber Login</CardTitle>
-          <CardDescription>Secure access to availability and bookings.</CardDescription>
+          <CardTitle className="luxury-heading text-3xl">Inloggen</CardTitle>
+          <CardDescription>Veilige toegang tot beschikbaarheid en boekingen.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mailadres</Label>
               <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Wachtwoord</Label>
               <Input
                 id="password"
                 type="password"
@@ -66,11 +66,25 @@ export default function LoginPage() {
             </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Inloggen..." : "Inloggen"}
             </Button>
           </form>
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="container flex min-h-screen items-center justify-center py-12">
+          <p className="text-sm text-muted-foreground">Inlogpagina laden...</p>
+        </main>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

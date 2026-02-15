@@ -7,7 +7,7 @@ import { assertValidCsrf } from "@/server/security/csrf";
 import { availabilitySchema } from "@/server/validators/availability";
 
 type Params = {
-  params: { id: string } | Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export async function PATCH(request: NextRequest, context: Params) {

@@ -6,7 +6,7 @@ import { assertValidCsrf } from "@/server/security/csrf";
 import { bookingService } from "@/server/services/booking-service";
 
 type Params = {
-  params: { id: string } | Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export async function PATCH(request: NextRequest, context: Params) {

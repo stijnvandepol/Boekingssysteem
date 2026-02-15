@@ -10,6 +10,9 @@ RUN npm install --no-audit --no-fund
 
 FROM base AS builder
 ENV NODE_ENV=production
+ENV DATABASE_URL=postgresql://postgres:postgres@db:5432/barber_booking?schema=public
+ENV AUTH_SECRET=build-time-secret-build-time-secret-1234
+ENV NEXTAUTH_URL=http://localhost:3000
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
